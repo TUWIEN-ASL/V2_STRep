@@ -1,0 +1,115 @@
+{
+"task_instruction": "slowly lift up the bottle, then move to the top center of the plate, and finally place it on the plate.",
+"is_usable": true,
+"failure_reason": null,
+"phase_rotation_policies": [
+{
+"phase_id": "phase_1",
+"rotation_policy": {
+"mode": "axis_constrained",
+"axis_constraints": [
+{
+"controlled_axis": "z",
+"reference_frame": "grasp",
+"reference_axis": "z",
+"relation": "same_direction",
+"controlled_positive_end_description": "black cap end of bottle",
+"reference_positive_end_description": "black cap end of bottle at phase entry"
+}
+],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+},
+{
+"phase_id": "phase_2",
+"rotation_policy": {
+"mode": "axis_constrained",
+"axis_constraints": [
+{
+"controlled_axis": "z",
+"reference_frame": "grasp",
+"reference_axis": "z",
+"relation": "same_direction",
+"controlled_positive_end_description": "black cap end of bottle",
+"reference_positive_end_description": "black cap end of bottle at lift completion"
+}
+],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+},
+{
+"phase_id": "phase_3",
+"rotation_policy": {
+"mode": "axis_constrained",
+"axis_constraints": [
+{
+"controlled_axis": "z",
+"reference_frame": "target",
+"reference_axis": "z",
+"relation": "same_direction",
+"controlled_positive_end_description": "black cap end of bottle",
+"reference_positive_end_description": "outward from the visible top surface of the plate"
+}
+],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+}
+],
+"current_grounding": {
+"controlled_entity": {
+"description": "upright small brown sauce bottle with a black cap, above and right of the plate",
+"bbox": [653, 198, 711, 336],
+"positive_pixels": [
+[682, 214],
+[681, 243],
+[671, 281],
+[694, 313]
+]
+},
+"allowed_grasp_region": {
+"bbox": [657, 234, 707, 277],
+"positive_pixels": [
+[676, 243],
+[696, 257],
+[670, 263]
+]
+},
+"target_entity": {
+"description": "empty light blue round plate below and left of the bottle",
+"bbox": [457, 357, 637, 501]
+},
+"target_geometry": {
+"representation": "point_normal",
+"target_point_pixel": [549, 432],
+"surface_pixels": [
+[525, 412],
+[566, 409],
+[586, 434],
+[559, 461],
+[522, 450]
+],
+"axis_origin_pixel": null,
+"axis_pixels": null,
+"axis_positive_endpoint_pixel": null,
+"plane_reference_pixel": null,
+"plane_reference_mode": null,
+"target_object_bbox": null,
+"target_object_positive_pixels": null
+}
+}
+}

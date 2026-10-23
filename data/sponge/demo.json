@@ -1,0 +1,119 @@
+{
+"task_instruction": "slowly move the sponge to the black mark on table center, and slightly wipe it out.",
+"video_structure": {
+"controlled_entity": {
+"description": "small rectangular blue-and-tan sponge"
+},
+"target_entity": {
+"description": "small black mark on the tabletop"
+},
+"target_representation": "plane",
+"phases": [
+{
+"phase_id": "phase_1",
+"name": "move sponge to wipe entry",
+"start_frame": 44,
+"end_frame": 64,
+"motion_source": "attractor",
+"reference_frame": null,
+"attractor_goal_phase_id": "phase_2",
+"repeatable": false,
+"cycle_interval": null,
+"rotation_policy": {
+"mode": "axis_constrained",
+"axis_constraints": [
+{
+"controlled_axis": "z",
+"reference_frame": "target",
+"reference_axis": "z",
+"relation": "parallel_either_direction",
+"controlled_positive_end_description": null,
+"reference_positive_end_description": null
+}
+],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+},
+{
+"phase_id": "phase_2",
+"name": "wipe black mark",
+"start_frame": 65,
+"end_frame": 149,
+"motion_source": "learn_demo",
+"reference_frame": "target",
+"attractor_goal_phase_id": null,
+"repeatable": false,
+"cycle_interval": null,
+"rotation_policy": {
+"mode": "axis_constrained",
+"axis_constraints": [
+{
+"controlled_axis": "z",
+"reference_frame": "target",
+"reference_axis": "z",
+"relation": "parallel_either_direction",
+"controlled_positive_end_description": null,
+"reference_positive_end_description": null
+}
+],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+}
+]
+},
+"demo_initial_grounding": {
+"is_usable": true,
+"failure_reason": null,
+"controlled_entity": {
+"description": "small rectangular blue-and-tan sponge",
+"bbox": [694, 461, 755, 560],
+"positive_pixels": [
+[724, 478],
+[710, 515],
+[740, 525],
+[726, 555]
+]
+},
+"allowed_grasp_region": {
+"bbox": [698, 462, 752, 548],
+"positive_pixels": [
+[724, 478],
+[710, 515],
+[740, 525]
+]
+},
+"target_entity": {
+"description": "small black mark on the tabletop",
+"bbox": [535, 410, 552, 422]
+},
+"target_geometry": {
+"representation": "plane",
+"target_point_pixel": null,
+"surface_pixels": [
+[520, 417],
+[568, 417],
+[544, 397],
+[544, 438],
+[522, 397],
+[566, 438]
+],
+"axis_origin_pixel": null,
+"axis_pixels": null,
+"axis_positive_endpoint_pixel": null,
+"plane_reference_pixel": [544, 417],
+"plane_reference_mode": "target",
+"target_object_bbox": null,
+"target_object_positive_pixels": null
+}
+}
+}

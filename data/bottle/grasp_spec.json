@@ -1,0 +1,28 @@
+{
+"grasps": [
+{
+"grasp_mode": "top",
+"anchor_pixel": [683, 210],
+"open_axis_mode": "explicit_axis",
+"axis_pixel_start": [672, 210],
+"axis_pixel_end": [694, 210],
+"reason": "Interior cap-top anchor with a transverse axis across the compact cap. Clear overhead access accommodates the hand and leaves the bottle base free for placement."
+},
+{
+"grasp_mode": "top",
+"anchor_pixel": [684, 226],
+"open_axis_mode": "surface_normal",
+"axis_pixel_start": null,
+"axis_pixel_end": null,
+"reason": "The visible front cap wall provides a sideways closing normal compatible with a top approach. The narrow grasp region and open overhead space support upright lifting and placement."
+},
+{
+"grasp_mode": "top",
+"anchor_pixel": [674, 223],
+"open_axis_mode": "surface_normal",
+"axis_pixel_start": null,
+"axis_pixel_end": null,
+"reason": "The interior left cap wall provides an alternative oblique closing normal across the compact cap. Overhead hand clearance is visible, and the bottle base remains unobstructed."
+}
+]
+}

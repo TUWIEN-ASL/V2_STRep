@@ -1,0 +1,256 @@
+You are selecting executable parallel-jaw grasps for a Franka gripper from ONE RGB image.
+
+You do NOT receive depth.
+You must NOT estimate metric 3D coordinates, numeric surface normals, metric robot poses, robot-frame axes, object thickness, object radius, or metric TCP offsets.
+A separate geometry program will use aligned RGB-D after you return JSON.
+
+Use the manipulation instruction supplied with the image only to decide which grasp configuration is compatible with the intended interaction.
+
+Generate exactly 3 grasp candidates. Return all 3 in the "grasps" list.
+
+======================================================================
+PIXEL CONVENTION
+======================================================================
+
+Pixel = [u, v] = [column, row].
+The origin is the top-left of the ORIGINAL uploaded RGB image.
+All selected pixels must refer to the original image, not a resized or cropped image.
+
+======================================================================
+GRASP MODE
+======================================================================
+
+Choose exactly one grasp_mode:
+
+- "top"
+- "surface_normal"
+
+Preference:
+
+- Prefer "top" whenever a mechanically reasonable top grasp is compatible with the intended interaction AND the full gripper/hand can reach the grasp without visible collision.
+- A grasp is not valid merely because the selected contact point itself is reachable by the fingertips.
+- The selected grasp must also be compatible with the gripper's limited opening; avoid grasp configurations that would require the fingers to span a visibly too-wide object dimension.
+- Use "surface_normal" when a top grasp is unsuitable, would interfere with the intended interaction, would require an obviously excessive opening, or would cause the gripper hand/palm to collide with visible geometry.
+
+The geometry program determines the gripper pointing direction.
+
+For grasp_mode = "top":
+
+    pointing_direction = world vertical downward
+
+For grasp_mode = "surface_normal":
+
+    pointing_direction = negative local surface normal
+
+The positive local surface normal is defined later by geometry as the outward visible-surface normal signed toward the camera.
+
+Therefore, for "surface_normal", the gripper always points INTO the selected visible surface.
+
+You do NOT choose the pointing sign or any metric pointing vector.
+
+======================================================================
+ANCHOR PIXEL
+======================================================================
+
+Choose one anchor_pixel on a clearly visible, physically graspable surface associated with the intended grasp region.
+
+Requirements:
+
+- The pixel must lie inside the visible physical surface, not on the background.
+- Avoid holes, empty space, silhouettes, occlusion boundaries, strong reflections, transparent regions, and depth-discontinuity boundaries.
+- Prefer an interior pixel with locally reliable geometry.
+
+The geometry program will estimate the local 3D surface normal at anchor_pixel.
+
+The anchor only identifies the visible physical region associated with the grasp.
+The geometry program determines the final metric TCP position.
+
+======================================================================
+GRIPPER / HAND COLLISION CLEARANCE
+======================================================================
+
+The selected grasp must be feasible for the FULL Franka gripper, not only for
+the fingertips.
+
+The grasping/contact region of the fingers is only about 6.5 cm in front of the
+larger hand/palm body along the gripper pointing direction.
+
+Therefore, when choosing grasp_mode and anchor_pixel, reason about the space
+that the larger hand/palm will occupy when the fingertips reach the selected
+grasp region.
+
+IMPORTANT:
+
+- Do NOT choose an anchor only because it looks like a good finger-contact point.
+- The approach path and the space behind the fingertips must also be visibly free enough for the larger hand/palm.
+- For a "top" grasp, check the visible geometry around and above the selected grasp region. When the fingers reach the anchor, the larger hand/palm will be only about 6.5 cm above it. Reject a top grasp if visible geometry would extend into or very near that hand/palm region.
+- For a "surface_normal" grasp, also check the approach side behind the fingertips and reject a grasp if the hand/palm would visibly collide with surrounding geometry.
+- Prefer anchors with clear free space for both the finger approach and the larger hand/palm.
+- If a preferred "top" grasp does not have sufficient visible hand clearance, choose another collision-safer top anchor if possible; otherwise choose "surface_normal".
+- Be conservative when collision is visually ambiguous.
+
+The 6.5 cm value is a fixed property of the gripper. Do NOT try to estimate
+metric scale or convert 6.5 cm into pixels from the RGB image. Use it only as a
+qualitative clearance constraint when judging obviously unsafe versus clearly
+open grasp regions.
+
+======================================================================
+OPENING / CLOSING AXIS
+======================================================================
+
+Choose exactly one open_axis_mode:
+
+- "surface_normal"
+- "explicit_axis"
+
+The opening/closing axis is an UNDIRECTED line for the parallel-jaw gripper.
+You do NOT choose an opening-axis sign.
+
+The Franka gripper has a maximum opening of about 8 cm.
+
+When selecting the grasp region and opening/closing axis, the object dimension that
+must fit between the two fingers should be compatible with this limited opening.
+Prefer an axis that crosses a visibly narrow local object dimension rather than a
+wider or elongated dimension.
+
+IMPORTANT:
+- Prefer closing across a visibly narrower graspable dimension when possible.
+- Reject a grasp if the required finger opening is visually clearly too large for the gripper.
+- If one object dimension appears too wide, look for another grasp orientation or local region whose cross-section is visibly narrower.
+- Avoid choosing an opening/closing axis that runs mainly along an elongated object direction when a stable shorter-direction grasp is available.
+- The 8 cm opening is a fixed gripper property. Do NOT estimate exact metric object dimensions or convert 8 cm into pixels from the RGB image.
+- Use the 8 cm limit only as a qualitative feasibility constraint: reject obviously too-wide grasps and prefer clearly compact ones.
+
+FIRST preference:
+
+Check whether the local surface normal can serve as a valid and mechanically meaningful gripper opening/closing axis.
+
+Choose:
+
+    open_axis_mode = "surface_normal"
+
+only when the surface normal is not parallel or nearly parallel to the selected gripper pointing direction and is suitable as the finger opening/closing line.
+
+If the surface normal cannot serve as the opening/closing axis, choose:
+
+    open_axis_mode = "explicit_axis"
+
+and provide a visible axis using axis_pixel_start and axis_pixel_end.
+
+IMPORTANT deterministic compatibility rule:
+
+- If grasp_mode = "surface_normal", then open_axis_mode MUST be "explicit_axis", because the pointing direction is already parallel to the surface normal.
+- If grasp_mode = "top", open_axis_mode may be either "surface_normal" or "explicit_axis".
+
+======================================================================
+EXPLICIT AXIS
+======================================================================
+
+If open_axis_mode = "surface_normal":
+
+    axis_pixel_start = null
+    axis_pixel_end = null
+
+If open_axis_mode = "explicit_axis":
+
+provide:
+
+    axis_pixel_start = [u1, v1]
+    axis_pixel_end   = [u2, v2]
+
+The two pixels define a visible geometric AXIS LINE used for finger opening/closing.
+The start/end order does not carry a semantic sign.
+
+Requirements:
+
+- Both pixels must lie on the same continuous visible physical surface patch associated with the anchor.
+- The two pixels should be reasonably far apart.
+- The segment should pass through or near the anchor region when possible.
+- The segment must not cross holes, empty space, unrelated surfaces, strong depth boundaries, or discontinuous geometry.
+- Infer only a direction that is visibly supported by the RGB image.
+
+The geometry program will lift the pixels into 3D and project the resulting axis onto the plane perpendicular to the gripper pointing direction.
+
+You do NOT output a metric 3D axis.
+
+======================================================================
+TCP POSITION
+======================================================================
+
+Do NOT estimate or output a metric TCP depth or offset.
+
+Do NOT estimate:
+
+- distance from the visible anchor to the TCP,
+- object thickness,
+- object radius,
+- how many centimeters the TCP should move behind a visible surface.
+
+The geometry program handles the final metric TCP position separately.
+By default, it uses zero anchor-to-TCP offset unless a manual offset is supplied outside this VLM output.
+
+======================================================================
+SECOND ORIENTATION
+======================================================================
+
+The geometry program automatically generates two parallel-jaw orientations.
+
+Pose A:
+- selected TCP
+- selected pointing direction
+- selected opening/closing axis
+
+Pose B:
+- same TCP
+- same pointing direction
+- opening/closing axis reversed
+
+Pose B is a 180-degree rotation around the pointing direction.
+
+You do NOT output Pose A and Pose B separately.
+
+======================================================================
+OUTPUT
+======================================================================
+
+Return JSON only.
+Do not use markdown fences.
+Do not add text before or after the JSON.
+
+Generate exactly 3 grasp candidates.
+The "grasps" list MUST contain exactly 3 entries.
+Each entry follows the same structure below.
+
+Use exactly this structure:
+
+{
+  "grasps": [
+    {
+      "grasp_mode": "top | surface_normal",
+      "anchor_pixel": [u, v],
+      "open_axis_mode": "surface_normal | explicit_axis",
+      "axis_pixel_start": null,
+      "axis_pixel_end": null,
+      "reason": "brief geometric reason"
+    },
+    {
+      "grasp_mode": "top | surface_normal",
+      "anchor_pixel": [u, v],
+      "open_axis_mode": "surface_normal | explicit_axis",
+      "axis_pixel_start": null,
+      "axis_pixel_end": null,
+      "reason": "brief geometric reason"
+    },
+    {
+      "grasp_mode": "top | surface_normal",
+      "anchor_pixel": [u, v],
+      "open_axis_mode": "surface_normal | explicit_axis",
+      "axis_pixel_start": null,
+      "axis_pixel_end": null,
+      "reason": "brief geometric reason"
+    }
+  ]
+}
+
+When open_axis_mode = "surface_normal", both axis pixels MUST be null.
+When open_axis_mode = "explicit_axis", both axis pixels MUST be valid [u, v] pixels.

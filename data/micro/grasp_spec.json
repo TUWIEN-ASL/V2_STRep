@@ -1,0 +1,28 @@
+{
+"grasps": [
+{
+"grasp_mode": "surface_normal",
+"anchor_pixel": [896, 254],
+"open_axis_mode": "explicit_axis",
+"axis_pixel_start": [885, 251],
+"axis_pixel_end": [906, 257],
+"reason": "Central handle face supports transverse closure for controlled pulling; frontal approach avoids the housing above."
+},
+{
+"grasp_mode": "surface_normal",
+"anchor_pixel": [901, 237],
+"open_axis_mode": "explicit_axis",
+"axis_pixel_start": [891, 234],
+"axis_pixel_end": [911, 240],
+"reason": "Upper-middle handle patch avoids the reflective cap and offers narrow transverse closure with open frontal approach space."
+},
+{
+"grasp_mode": "surface_normal",
+"anchor_pixel": [890, 276],
+"open_axis_mode": "explicit_axis",
+"axis_pixel_start": [879, 273],
+"axis_pixel_end": [900, 279],
+"reason": "Lower-middle handle face provides a narrow grasp away from the bottom attachment, compatible with slow door pulling."
+}
+]
+}

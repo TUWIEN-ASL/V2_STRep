@@ -1,0 +1,208 @@
+{
+  "motion_reference": {
+    "plane_press_down_m": 0.01
+  },
+
+  "reconstruction": {
+    "controlled_object_frame_method": "sam3d",
+    "target_object_frame_method": "sam3d",
+
+    "world_up": [
+      0.0,
+      0.0,
+      1.0
+    ],
+
+    "object_depth_band_m": 0.05,
+    "object_bbox_stride": 2,
+    "object_minimum_points": 50,
+
+    "target_depth_band_m": 0.04,
+    "target_bbox_stride": 2,
+    "target_minimum_points": 50,
+    "grasp_patch_radius": 2,
+
+    "object_flow_inlier_threshold_m": 0.01,
+    "object_flow_global_track_filter": true,
+    "object_flow_track_min_valid_ratio": 0.6,
+    "object_flow_track_mad_scale": 3.0,
+    "object_flow_minimum_stable_tracks": 6,
+    "object_flow_stable_track_huber_delta_m": 0.006,
+    "object_flow_stable_track_irls_iterations": 4,
+
+    "object_flow_temporal_median_window": 5,
+    "object_flow_temporal_refinement": true,
+    "object_flow_temporal_translation_observation_sigma_m": 0.006,
+    "object_flow_temporal_translation_acceleration_sigma_m": 0.03,
+    "object_flow_temporal_rotation_observation_sigma_deg": 5.0,
+    "object_flow_temporal_rotation_acceleration_sigma_deg": 20.0,
+
+    "object_flow_max_translation_step_m": 0.01,
+    "object_flow_max_rotation_step_deg": 5.0,
+    "object_flow_adaptive_step_limit": true,
+    "object_flow_adaptive_step_limit_mad_scale": 6.0,
+    "object_flow_adaptive_step_limit_percentile": 90.0
+  },
+
+  "target_pose_registration": {
+    "controlled_entity_rotation_constraint": "full_6d",
+    "target_object_rotation_constraint": "full_6d",
+    "explanation": "Options: yaw_only, full_6d. yaw_only removes demo-to-current roll/pitch.",
+
+    "sam2_model_path": "facebook/sam2-hiera-large",
+    "device": "cuda",
+
+    "minimum_depth_m": 0.05,
+    "maximum_depth_m": 3.0,
+    "depth_band_m": 0.0,
+    "point_stride": 1,
+    "depth_policy": "min",
+    "depth_search_radius_px": 1,
+    "mask_erode_px": 2,
+
+    "loftr_pretrained": "indoor",
+    "loftr_device": "cuda",
+    "loftr_confidence_threshold": 0.1,
+    "loftr_maximum_long_side": 1024,
+    "loftr_crop_padding_px": 8,
+    "loftr_maximum_matches": 500,
+
+    "ransac_enabled": true,
+    "ransac_3d_inlier_threshold_m": 0.01,
+    "ransac_iterations": 5000,
+    "ransac_seed": 0,
+    "ransac_minimum_inliers": 3,
+    "ransac_minimum_inlier_ratio": 0,
+
+    "icp_refine": true,
+    "icp_voxel_size_m": 0.005,
+    "icp_overlap_fraction": 0.65,
+    "icp_coarse_max_correspondence_distance_m": 0.05,
+    "icp_fine_max_correspondence_distance_m": 0.015,
+    "icp_coarse_max_iterations": 60,
+    "icp_fine_max_iterations": 100,
+    "icp_stop_rms_change_m": 1e-05,
+    "icp_accept_only_if_improved": true,
+
+    "validation_max_correspondence_distance_m": 0.03,
+    "validation_trim_fraction": 0.65
+  },
+
+  "sam3d": {
+    "root": "../sam-3d-objects",
+    "environment": "sam3d-objects",
+
+    "seed": 42,
+    "scale_mode": "axes",
+    "scale_bound": 2.0,
+    "starts": 6
+  },
+
+  "camera": {
+    "bundle": "../input/camera_calibration_info.json",
+    "depth_scale_to_m": 1.0,
+
+    "intrinsics": null,
+    "T_world_camera": null,
+    "intrinsics_key": null,
+    "T_world_camera_key": null
+  },
+
+  "robot": {
+    "urdf_description": "panda_description",
+    "target_link": "panda_hand_tcp",
+    "sphere_json": "panda_spheres.json"
+  },
+
+  "optimizer": {
+    "dt": 0.05,
+    "tcp_offset_m": 0.1234,
+    "table_z_world": 0.0,
+    "panda_arm_dof": 7,
+
+    "initial_trajectory": null,
+    "fixed_start_samples": 1,
+    "zero_final_velocity": true,
+
+    "position_scale": 40.0,
+    "axis_scale": 10.0,
+    "full_rotation_scale": 4.0,
+    "remaining_rotation_scale": 1.5,
+    "demo_tracking_weight": 1.0,
+    "attractor_tracking_weight": 0.03,
+    "phase_tracking_weights": {},
+
+    "joint_smoothness_scale": 5.0,
+    "acceleration_scale": 0.2,
+    "rest_scale": 0.005,
+
+    "phase_symmetry_max_angle_rad": 3.141592653589793,
+    "phase_symmetry_rest_scale": 0.0,
+
+    "grasp_position_scale": 100.0,
+    "grasp_rotation_scale": 10.0,
+
+    "joint_limit_margin_deg": 5.0,
+    "self_collision_margin_m": 0.02,
+    "self_collision_scale": 5.0,
+    "world_collision_margin_m": 0.01
+  },
+
+  "scene_geometry": {
+    "preferred_normal_world": [
+      0.0,
+      0.0,
+      1.0
+    ],
+
+    "point_patch_radius": 2,
+    "plane_patch_radius": 8,
+    "plane_patch_stride": 2
+  },
+
+  "multi_grasp": {
+    "max_position_error_m": null,
+    "max_axis_error_deg": 10.0,
+    "max_rotation_error_deg": null,
+
+    "max_grasp_pose_position_error_m": 0.003,
+    "max_grasp_pose_rotation_error_deg": 5.0,
+
+    "clear_jax_caches_between_candidates": false
+  },
+
+  "demo": {
+    "rgb": "../input/demo_rgb.png",
+    "initial_depth": "../input/demo_initial_depth.npy",
+    "analysis": "../input/demo.json",
+    "object_flow": "../input/object_flow_result.pt",
+
+    "scene_grounding": null,
+    "video_grounding": null,
+
+    "sam3d_pose": null,
+    "sam3d_target_pose": null,
+
+    "object_trajectory": null,
+    "grasp_trajectory": null
+  },
+
+  "current": {
+    "rgb": "../input/current_rgb.png",
+    "initial_depth": "../input/current_initial_depth.npy",
+    "adaptation": "../input/current.json",
+    "scene_grounding": null,
+
+    "use_given_q": false,
+    "q": null,
+    "q_candidates": null,
+
+    "grasp_poses": null,
+    "grasp_pose": null,
+    "grasp_scores": null,
+    "grasp_pose_frame": "world",
+
+    "T_world_object": null,
+    "T_world_grasp": null
+  }
+}

@@ -1,0 +1,28 @@
+{
+"grasps": [
+{
+"grasp_mode": "top",
+"anchor_pixel": [613, 341],
+"open_axis_mode": "surface_normal",
+"axis_pixel_start": null,
+"axis_pixel_end": null,
+"reason": "Upper shaft below the reflective cap; clear overhead approach, narrow cross-section, and lower end free for tapping."
+},
+{
+"grasp_mode": "top",
+"anchor_pixel": [620, 348],
+"open_axis_mode": "surface_normal",
+"axis_pixel_start": null,
+"axis_pixel_end": null,
+"reason": "Interior upper-side surface supports closing across the shaft using its side normal, with open space above for the hand."
+},
+{
+"grasp_mode": "top",
+"anchor_pixel": [615, 358],
+"open_axis_mode": "surface_normal",
+"axis_pixel_start": null,
+"axis_pixel_end": null,
+"reason": "Alternative upper-shaft contact away from edges and cap reflections; overhead clearance and an exposed lower end support lifting and two vertical taps."
+}
+]
+}

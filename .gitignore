@@ -1,0 +1,30 @@
+# Local tooling and environment files.
+/.agents/
+/.codex/
+.env
+.env.*
+!.env.example
+.venv/
+
+# Python caches and build products.
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+*.log
+
+# Runtime inputs, outputs and temporary launcher configurations.
+/input/
+/runs/
+/sam3d_cache/
+/environments/snapshots/
+/vlm_grasp_test/
+/config/full_pipeline_spatracker_*.json
+/config/full_pipeline_grasp_different_scene.*.json
+
+# Downloaded external code and preserved upstream history.
+/external/
+/Dream2Flow/.upstream_git/
+/Dream2Flow/camera_calibration_info.json

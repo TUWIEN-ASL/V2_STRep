@@ -1,0 +1,62 @@
+{
+"task_instruction": "slowly open the upper drawer to match the lower drawer pose.",
+"is_usable": true,
+"failure_reason": null,
+"phase_rotation_policies": [
+{
+"phase_id": "phase_1",
+"rotation_policy": {
+"mode": "full_demo",
+"axis_constraints": [],
+"remaining_rotation": "none",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+}
+],
+"current_grounding": {
+"controlled_entity": {
+"description": "Visible front panel and brown pull tab of the closed upper wooden drawer.",
+"bbox": [775, 199, 890, 388],
+"positive_pixels": [
+[790, 233],
+[801, 256],
+[824, 302],
+[847, 327],
+[868, 359]
+]
+},
+"allowed_grasp_region": {
+"bbox": [801, 260, 837, 290],
+"positive_pixels": [
+[811, 276],
+[821, 270]
+]
+},
+"target_entity": {
+"description": "Open lower wooden drawer with exposed interior, wooden walls, and a brown pull tab.",
+"bbox": [665, 249, 875, 467]
+},
+"target_geometry": {
+"representation": "object_pose_6d",
+"target_point_pixel": null,
+"surface_pixels": null,
+"axis_origin_pixel": null,
+"axis_pixels": null,
+"axis_positive_endpoint_pixel": null,
+"plane_reference_pixel": null,
+"plane_reference_mode": null,
+"target_object_bbox": [665, 249, 875, 467],
+"target_object_positive_pixels": [
+[725, 319],
+[749, 353],
+[798, 383],
+[714, 390],
+[795, 431]
+]
+}
+}
+}

@@ -1,0 +1,19 @@
+{
+  "dream2flow_upstream": {
+    "url": "https://github.com/KDharmarajanDev/Dream2Flow.git",
+    "commit": "f87be21190015f49bacf5c03b81c7192b92cc567"
+  },
+  "dependencies": {
+    "SpaTrackerV2": {
+      "url": "https://github.com/henry123-boy/SpaTrackerV2.git",
+      "commit": "7e12274c52077860cebfe007a6290777db43b63c",
+      "path": "deps/SpaTrackerV2",
+      "patch": "patches/spatracker_memory.patch"
+    },
+    "co-tracker": {
+      "url": "https://github.com/facebookresearch/co-tracker.git",
+      "commit": "82e02e8029753ad4ef13cf06be7f4fc5facdda4d",
+      "path": "deps/co-tracker"
+    }
+  }
+}

@@ -1,0 +1,194 @@
+You analyze one robot-manipulation demonstration video.
+
+INPUTS
+- initial RGB image
+- demonstration video
+- natural-language instruction
+- total frame count
+- image width and height
+
+GOAL
+Return the minimum execution structure needed to transfer the demonstration, plus pixel grounding for the demonstration initial frame. Return JSON only.
+
+TASK INSTRUCTIONS
+Directly copy the input natural-language instruction
+
+CANONICAL CONTROLLED FRAME
+The metric controlled-object frame is computed later from the initial segmented RGB-D point cloud:
+- +z: the PCA axis most aligned with world +z (the table normal); choose its sign toward world +z.
+- +x: among the other PCA axes, choose the one most aligned with the horizontal direction from the object toward the camera; choose its sign in the opposite direction, away from the camera.
+- +y: +z cross +x; then recompute +x as +y cross +z.
+
+This frame is computed once at the initial pose and transported rigidly through the video using tracked 3D correspondences and robust rigid fitting. It is not recomputed per frame. The VLM must not output metric axes.
+
+The x/y axes provide a deterministic view-defined semantic gauge for describing task-relevant orientation relations. Use controlled x/y constraints only when such a relation is visibly meaningful for the task. For rotationally symmetric objects, x/y may be arbitrary gauge directions and rotation around z may remain free.
+
+REFERENCE FRAMES
+Use only:
+- "grasp": canonical frame attached to the controlled entity; origin is selected later from grasp grounding and orientation follows the controlled frame above.
+- "target": frame constructed later from target RGB-D geometry.
+
+TARGET REPRESENTATION
+Choose exactly one representation sufficient for all target-referenced phases.
+
+Select it from the geometry required by the complete demonstrated motion, not only from the final target position. Use the least complex representation that preserves every required target-relative position, direction, and orientation relationship.
+
+- "point"`: target position only; no target axis.
+- "point_normal"`: target point + local surface normal; only target `z` is meaningful. Use when a localized interaction with the surface direction is important.
+- "axis"`: one explicit task-relevant physical/functional axis; only target `z` is meaningful. Use for the motion rotate about an axis and an approximate physical axis is visable.
+- "plane"`: point on an extended planar region + plane normal; only target `z` is meaningful. Use for continuous and close contact to a surface region with force.
+- "object_pose_6d"`: full segmented target-object pose; target `x/y/z` are meaningful. Use when motion depends on the target object's full body frame.
+
+Rules:
+- Use the simplest representation sufficient for the task.
+- Prefer "point" when object rotation is free and are not task-relative.
+- Prefer "point_normal" when one local surface direction is sufficient.
+- Prefer "axis" only when one explicit functional axis is sufficient.
+- Prefer "plane" only when continuous and close contact to a surface with force.
+- Prefer "object_pose_6d" when full object alignment are required.
+- The representation must support every target axis referenced by the rotation policies.
+
+
+PHASES
+Use the minimum number of ordered, non-overlapping phases. Frame indices are inclusive. The first phase starts at the first frame where the controlled entity begins motion.
+
+motion_source:
+- "learn_demo": retain the demonstrated trajectory.
+- "attractor": discard that demonstrated path and connect to the entry of a later target-referenced learn_demo phase. Use reference_frame=null and name that later phase in attractor_goal_phase_id.
+
+reference_frame for learn_demo:
+- "grasp": retain motion relative to the controlled pose at phase entry.
+- "target": retain motion relative to the demonstration target frame.
+
+ROTATION POLICY
+Every phase has one mode:
+- "free": no orientation constraint; axis_constraints=[]; remaining_rotation="free"; phase symmetry none.
+- "axis_constrained": constrain one or two controlled axes to grasp or target axes. remaining_rotation is "free", "fixed_from_demo", or "none".
+- "full_demo": preserve the complete demonstrated relative orientation; axis_constraints=[]; remaining_rotation="none".
+
+Each axis constraint contains:
+- controlled_axis: "x" | "y" | "z"
+- reference_frame: "grasp" | "target"
+- reference_axis: "x" | "y" | "z"
+- relation: "same_direction" | "opposite_direction" | "parallel_either_direction"
+- controlled_positive_end_description: short visible cue or null
+- reference_positive_end_description: short visible cue or null
+
+TARGET-AXIS RULES
+- "point" has no target axis and cannot be used in a target-axis constraint.
+- For "point_normal", target z is the local surface normal.
+- For "axis", target z is the physical or functional axis.
+- For "plane", target z is the plane normal.
+- For "point_normal", "axis", and "plane", target x and y are undefined and must not be referenced.
+- For "object_pose_6d", target x, y, and z may be referenced.
+- If a phase requires target x or target y, use "object_pose_6d".
+
+PHASE SYMMETRY
+Use phase_symmetry.mode="shared_offset" only when a target-referenced learn_demo phase with mode="full_demo" may receive one constant rotation about a physically meaningful symmetric target axis. The optimizer, not the VLM, selects the angle from robot feasibility, smoothness, and collision constraints. Do not output a numerical angle or a demo angle reference.
+
+shared_offset requires:
+- motion_source="learn_demo"
+- reference_frame="target"
+- rotation mode="full_demo"
+- phase_symmetry.reference_frame="target"
+- one meaningful target symmetry axis
+- the same angle applies to the complete phase
+
+For point_normal, axis, and plane targets, only target z may be the symmetry axis. A point target has no symmetry axis.
+
+REPEATABILITY
+Set repeatable=true only for a learn_demo phase containing a complete repeatable cycle. Return one representative cycle interval. Attractors are never repeatable.
+
+DEMO INITIAL GROUNDING
+Ground the initial video frame for RGB-D reconstruction.
+Pixel: [x,y]. Bbox: [x_min,y_min,x_max,y_max]. All coordinates must be inside the image.
+
+Return:
+- controlled entity: tight bbox and 2-6 interior positive pixels.
+- allowed grasp region: bbox and 1-4 interior pixels when a grasp must be generated; otherwise null.
+- target entity: tight bbox.
+- target geometry evidence required by the selected representation:
+  - point: target_point_pixel
+  - point_normal: target_point_pixel and 4-6 surface_pixels
+  - axis: axis_origin_pixel and, when visible, two axis_pixels
+  - plane: plane_reference_pixel, plane_reference_mode and 4-6 surface_pixels, plane_reference_pixel is the task-relevant reference point, select either the center of the interaction region or a specific target point, Use plane_reference_mode="center" for the center of the interaction region and "target" for a specific task target
+  - object_pose_6d: target_object_bbox and 2-6 target_object_positive_pixels
+
+Return target positive-end evidence only when a directed target axis is required and visibly supported. Do not invent hidden geometry.
+
+DO NOT OUTPUT
+No metric 3D coordinates, depth, vectors, normals, matrices, quaternions, Euler angles, robot poses, joints, forces, confidence scores, rationale, or numerical symmetry angle.
+
+REQUIRED JSON
+{ "task_instruction":"copy input instruction",
+  "video_structure": {
+    "controlled_entity": {"description": "short visible description"},
+    "target_entity": {"description": "short visible description"},
+    "target_representation": "point | point_normal | axis | plane | object_pose_6d",
+    "phases": [
+      {
+        "phase_id": "phase_1",
+        "name": "short functional name",
+        "start_frame": 0,
+        "end_frame": 0,
+        "motion_source": "learn_demo | attractor",
+        "reference_frame": "grasp | target | null",
+        "attractor_goal_phase_id": null,
+        "repeatable": false,
+        "cycle_interval": null,
+        "rotation_policy": {
+          "mode": "free | axis_constrained | full_demo",
+          "axis_constraints": [],
+          "remaining_rotation": "free | fixed_from_demo | none",
+          "phase_symmetry": {
+            "mode": "none | shared_offset",
+            "reference_frame": "target | null",
+            "reference_axis": "x | y | z | null"
+          }
+        }
+      }
+    ]
+  },
+  "demo_initial_grounding": {
+    "is_usable": true,
+    "failure_reason": null,
+    "controlled_entity": {
+      "description": "short visible description",
+      "bbox": [0,0,0,0],
+      "positive_pixels": [[0,0]]
+    },
+    "allowed_grasp_region": null,
+    "target_entity": {
+      "description": "short visible description",
+      "bbox": [0,0,0,0]
+    },
+    "target_geometry": {
+      "representation": "point | point_normal | axis | plane | object_pose_6d",
+      "target_point_pixel": null,
+      "surface_pixels": null,
+      "axis_origin_pixel": null,
+      "axis_pixels": null,
+      "axis_positive_endpoint_pixel": null,
+      "plane_reference_pixel": null,
+      "plane_reference_mode": "center | target",
+      "target_object_bbox": null,
+      "target_object_positive_pixels": null
+    }
+  }
+}
+
+When allowed_grasp_region is not null:
+{"bbox":[0,0,0,0],"positive_pixels":[[0,0]]}
+
+When cycle_interval is not null:
+{"start_frame":0,"end_frame":0}
+
+VALIDATION
+- Return exactly the three top-level fields above and no prose.
+- video_structure must use unique ordered phases and valid non-overlapping frame ranges.
+- learn_demo requires reference_frame="grasp" or "target".
+- attractor requires reference_frame=null and a later target-referenced learn_demo goal.
+- shared_offset follows the rules above and contains no angle metadata.
+- demo_initial_grounding.target_geometry.representation must equal video_structure.target_representation.
+- Every target-axis constraint must be supported by target_representation.
+- Use null for unused grounding fields.

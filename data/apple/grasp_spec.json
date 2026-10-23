@@ -1,0 +1,28 @@
+{
+"grasps": [
+{
+"grasp_mode": "top",
+"anchor_pixel": [645, 389],
+"open_axis_mode": "explicit_axis",
+"axis_pixel_start": [634, 389],
+"axis_pixel_end": [661, 389],
+"reason": "Upper crown supports a top approach with clear overhead hand space. Explicit transverse closing avoids using the nearly vertical crown normal."
+},
+{
+"grasp_mode": "top",
+"anchor_pixel": [635, 405],
+"open_axis_mode": "surface_normal",
+"axis_pixel_start": null,
+"axis_pixel_end": null,
+"reason": "Visible left flank supplies a lateral closing normal across the compact apple, with clear finger and palm approach space for lifting."
+},
+{
+"grasp_mode": "top",
+"anchor_pixel": [665, 407],
+"open_axis_mode": "surface_normal",
+"axis_pixel_start": null,
+"axis_pixel_end": null,
+"reason": "Visible right flank provides an alternative lateral closing normal. Clear overhead space supports a top grasp compatible with placement onto the plate."
+}
+]
+}

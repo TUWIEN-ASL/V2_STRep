@@ -1,0 +1,28 @@
+{
+"grasps": [
+{
+"grasp_mode": "top",
+"anchor_pixel": [505, 279],
+"open_axis_mode": "explicit_axis",
+"axis_pixel_start": [488, 279],
+"axis_pixel_end": [523, 279],
+"reason": "Interior upper-face anchor with visibly clear overhead space; closing across the narrow width leaves the underside available for wiping."
+},
+{
+"grasp_mode": "top",
+"anchor_pixel": [507, 266],
+"open_axis_mode": "explicit_axis",
+"axis_pixel_start": [490, 266],
+"axis_pixel_end": [524, 266],
+"reason": "Rearward upper-face anchor away from edges and the bright stripe; transverse closure supports controlled wiping with a clear overhead approach."
+},
+{
+"grasp_mode": "top",
+"anchor_pixel": [508, 252],
+"open_axis_mode": "explicit_axis",
+"axis_pixel_start": [493, 252],
+"axis_pixel_end": [524, 252],
+"reason": "Interior blue upper patch with open surrounding space; the axis crosses the short width while preserving underside contact for wiping."
+}
+]
+}

@@ -1,0 +1,956 @@
+diff --git a/models/SpaTrackV2/models/tracker3D/TrackRefiner.py b/models/SpaTrackV2/models/tracker3D/TrackRefiner.py
+index cb39db4..3ccde38 100644
+--- a/models/SpaTrackV2/models/tracker3D/TrackRefiner.py
++++ b/models/SpaTrackV2/models/tracker3D/TrackRefiner.py
+@@ -263,7 +263,7 @@ class TrackRefiner3D(CoTrackerThreeOffline):
+         # xy_refine = torch.zeros_like(cam_pts_refine)[...,:2]
+         return c2w_traj_glob, cam_pts_refine, intrs_refine, xy_refine, world_tracks_init, world_tracks_refined, c2w_traj_init
+     
+-    def extract_img_feat(self, video, fmaps_chunk_size=200):
++    def extract_img_feat(self, video, fmaps_chunk_size=8):
+         B, T, C, H, W = video.shape
+         dtype = video.dtype
+         H4, W4 = H // self.stride, W // self.stride
+@@ -348,7 +348,7 @@ class TrackRefiner3D(CoTrackerThreeOffline):
+         overlap_d=None,
+         iters=4,
+         add_space_attn=True,
+-        fmaps_chunk_size=200,
++        fmaps_chunk_size=8,
+         intrs=None,
+         traj3d_gt=None,
+         custom_vid=False,
+diff --git a/models/SpaTrackV2/models/vggt4track/models/aggregator.py b/models/SpaTrackV2/models/vggt4track/models/aggregator.py
+index 07fd59e..c58202a 100644
+--- a/models/SpaTrackV2/models/vggt4track/models/aggregator.py
++++ b/models/SpaTrackV2/models/vggt4track/models/aggregator.py
+@@ -5,16 +5,25 @@
+ # LICENSE file in the root directory of this source tree.
+ 
+ import logging
++from typing import List, Optional, Tuple
++
+ import torch
+ import torch.nn as nn
+-import torch.nn.functional as F
+-from typing import Optional, Tuple, Union, List, Dict, Any
++from torch.utils.checkpoint import checkpoint
+ 
+ from models.SpaTrackV2.models.vggt4track.layers import PatchEmbed
+ from models.SpaTrackV2.models.vggt4track.layers.block import Block
+-from models.SpaTrackV2.models.vggt4track.layers.rope import RotaryPositionEmbedding2D, PositionGetter
+-from models.SpaTrackV2.models.vggt4track.layers.vision_transformer import vit_small, vit_base, vit_large, vit_giant2
+-from torch.utils.checkpoint import checkpoint
++from models.SpaTrackV2.models.vggt4track.layers.rope import (
++    PositionGetter,
++    RotaryPositionEmbedding2D,
++)
++from models.SpaTrackV2.models.vggt4track.layers.vision_transformer import (
++    vit_base,
++    vit_giant2,
++    vit_large,
++    vit_small,
++)
++
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -24,28 +33,69 @@ _RESNET_STD = [0.229, 0.224, 0.225]
+ 
+ class Aggregator(nn.Module):
+     """
+-    The Aggregator applies alternating-attention over input frames,
++    The Aggregator applies alternating attention over input frames,
+     as described in VGGT: Visual Geometry Grounded Transformer.
+ 
+-
+     Args:
+-        img_size (int): Image size in pixels.
+-        patch_size (int): Size of each patch for PatchEmbed.
+-        embed_dim (int): Dimension of the token embeddings.
+-        depth (int): Number of blocks.
+-        num_heads (int): Number of attention heads.
+-        mlp_ratio (float): Ratio of MLP hidden dim to embedding dim.
+-        num_register_tokens (int): Number of register tokens.
+-        block_fn (nn.Module): The block type used for attention (Block by default).
+-        qkv_bias (bool): Whether to include bias in QKV projections.
+-        proj_bias (bool): Whether to include bias in the output projection.
+-        ffn_bias (bool): Whether to include bias in MLP layers.
+-        patch_embed (str): Type of patch embed. e.g., "conv" or "dinov2_vitl14_reg".
+-        aa_order (list[str]): The order of alternating attention, e.g. ["frame", "global"].
+-        aa_block_size (int): How many blocks to group under each attention type before switching. If not necessary, set to 1.
+-        qk_norm (bool): Whether to apply QK normalization.
+-        rope_freq (int): Base frequency for rotary embedding. -1 to disable.
+-        init_values (float): Init scale for layer scale.
++        img_size:
++            Image size in pixels.
++
++        patch_size:
++            Size of each image patch.
++
++        embed_dim:
++            Dimension of token embeddings.
++
++        depth:
++            Number of transformer blocks.
++
++        num_heads:
++            Number of attention heads.
++
++        mlp_ratio:
++            Ratio between the MLP hidden dimension and embedding dimension.
++
++        num_register_tokens:
++            Number of register tokens.
++
++        block_fn:
++            Transformer block implementation.
++
++        qkv_bias:
++            Whether QKV projections include bias.
++
++        proj_bias:
++            Whether output projections include bias.
++
++        ffn_bias:
++            Whether feed-forward layers include bias.
++
++        patch_embed:
++            Patch embedding implementation.
++
++        aa_order:
++            Alternating-attention order, normally ["frame", "global"].
++
++        aa_block_size:
++            Number of consecutive blocks processed under each attention type.
++
++        qk_norm:
++            Whether query and key normalization is enabled.
++
++        rope_freq:
++            Rotary-position-embedding base frequency.
++
++        init_values:
++            Initial layer-scale value.
++
++        cached_layer_indices:
++            Transformer-layer outputs required by downstream heads.
++
++            The default DPT depth head uses layers:
++
++                4, 11, 17, 23
++
++            The camera head uses the final layer.
+     """
+ 
+     def __init__(
+@@ -62,20 +112,40 @@ class Aggregator(nn.Module):
+         proj_bias=True,
+         ffn_bias=True,
+         patch_embed="dinov2_vitl14_reg",
+-        aa_order=["frame", "global"],
++        aa_order=None,
+         aa_block_size=1,
+         qk_norm=True,
+         rope_freq=100,
+         init_values=0.01,
++        cached_layer_indices=(4, 11, 17, 23),
+     ):
+         super().__init__()
+ 
+-        self.__build_patch_embed__(patch_embed, img_size, patch_size, num_register_tokens, embed_dim=embed_dim)
++        if aa_order is None:
++            aa_order = ["frame", "global"]
+ 
+-        # Initialize rotary position embedding if frequency > 0
+-        self.rope = RotaryPositionEmbedding2D(frequency=rope_freq) if rope_freq > 0 else None
+-        self.position_getter = PositionGetter() if self.rope is not None else None
++        self.__build_patch_embed__(
++            patch_embed=patch_embed,
++            img_size=img_size,
++            patch_size=patch_size,
++            num_register_tokens=num_register_tokens,
++            embed_dim=embed_dim,
++        )
+ 
++        # Rotary position embedding.
++        if rope_freq > 0:
++            self.rope = RotaryPositionEmbedding2D(
++                frequency=rope_freq
++            )
++        else:
++            self.rope = None
++
++        if self.rope is not None:
++            self.position_getter = PositionGetter()
++        else:
++            self.position_getter = None
++
++        # Per-frame transformer blocks.
+         self.frame_blocks = nn.ModuleList(
+             [
+                 block_fn(
+@@ -93,6 +163,7 @@ class Aggregator(nn.Module):
+             ]
+         )
+ 
++        # Global cross-frame transformer blocks.
+         self.global_blocks = nn.ModuleList(
+             [
+                 block_fn(
+@@ -115,32 +186,85 @@ class Aggregator(nn.Module):
+         self.patch_size = patch_size
+         self.aa_block_size = aa_block_size
+ 
+-        # Validate that depth is divisible by aa_block_size
++        # Only retain outputs that downstream heads actually consume.
++        #
++        # This avoids retaining large tensors from all 24 layers.
++        self.cached_layer_indices = set(cached_layer_indices)
++
++        # The camera head consumes the final layer.
++        self.cached_layer_indices.add(depth - 1)
++
++        invalid_cached_indices = [
++            layer_index
++            for layer_index in self.cached_layer_indices
++            if layer_index < 0 or layer_index >= depth
++        ]
++
++        if invalid_cached_indices:
++            raise ValueError(
++                "cached_layer_indices contains invalid indices. "
++                f"Valid range is [0, {depth - 1}], but received "
++                f"{invalid_cached_indices}"
++            )
++
+         if self.depth % self.aa_block_size != 0:
+-            raise ValueError(f"depth ({depth}) must be divisible by aa_block_size ({aa_block_size})")
++            raise ValueError(
++                f"depth ({depth}) must be divisible by "
++                f"aa_block_size ({aa_block_size})"
++            )
+ 
+         self.aa_block_num = self.depth // self.aa_block_size
+ 
+-        # Note: We have two camera tokens, one for the first frame and one for the rest
+-        # The same applies for register tokens
+-        self.camera_token = nn.Parameter(torch.randn(1, 2, 1, embed_dim))
+-        self.register_token = nn.Parameter(torch.randn(1, 2, num_register_tokens, embed_dim))
++        # Two camera-token versions:
++        # index 0 for the first frame and index 1 for later frames.
++        self.camera_token = nn.Parameter(
++            torch.randn(
++                1,
++                2,
++                1,
++                embed_dim,
++            )
++        )
++
++        # The same first-frame/later-frame arrangement is used for
++        # register tokens.
++        self.register_token = nn.Parameter(
++            torch.randn(
++                1,
++                2,
++                num_register_tokens,
++                embed_dim,
++            )
++        )
+ 
+-        # The patch tokens start after the camera and register tokens
++        # Patch tokens begin after one camera token and all register tokens.
+         self.patch_start_idx = 1 + num_register_tokens
+ 
+-        # Initialize parameters with small values
+-        nn.init.normal_(self.camera_token, std=1e-6)
+-        nn.init.normal_(self.register_token, std=1e-6)
++        nn.init.normal_(
++            self.camera_token,
++            std=1e-6,
++        )
+ 
+-        # Register normalization constants as buffers
++        nn.init.normal_(
++            self.register_token,
++            std=1e-6,
++        )
++
++        # Normalization constants are buffers so that they follow the model
++        # between CPU and GPU automatically.
+         for name, value in (
+             ("_resnet_mean", _RESNET_MEAN),
+             ("_resnet_std", _RESNET_STD),
+         ):
+             self.register_buffer(
+                 name,
+-                torch.FloatTensor(value).view(1, 1, 3, 1, 1),
++                torch.FloatTensor(value).view(
++                    1,
++                    1,
++                    3,
++                    1,
++                    1,
++                ),
+                 persistent=False,
+             )
+ 
+@@ -157,182 +281,560 @@ class Aggregator(nn.Module):
+         embed_dim=1024,
+     ):
+         """
+-        Build the patch embed layer. If 'conv', we use a
+-        simple PatchEmbed conv layer. Otherwise, we use a vision transformer.
++        Build the patch-embedding network.
+         """
+ 
+         if "conv" in patch_embed:
+-            self.patch_embed = PatchEmbed(img_size=img_size, patch_size=patch_size, in_chans=3, embed_dim=embed_dim)
+-        else:
+-            vit_models = {
+-                "dinov2_vitl14_reg": vit_large,
+-                "dinov2_vitb14_reg": vit_base,
+-                "dinov2_vits14_reg": vit_small,
+-                "dinov2_vitg2_reg": vit_giant2,
+-            }
+-
+-            self.patch_embed = vit_models[patch_embed](
++            self.patch_embed = PatchEmbed(
+                 img_size=img_size,
+                 patch_size=patch_size,
+-                num_register_tokens=num_register_tokens,
+-                interpolate_antialias=interpolate_antialias,
+-                interpolate_offset=interpolate_offset,
+-                block_chunks=block_chunks,
+-                init_values=init_values,
++                in_chans=3,
++                embed_dim=embed_dim,
+             )
+ 
+-            # Disable gradient updates for mask token
+-            if hasattr(self.patch_embed, "mask_token"):
+-                self.patch_embed.mask_token.requires_grad_(False)
++            return
++
++        vit_models = {
++            "dinov2_vitl14_reg": vit_large,
++            "dinov2_vitb14_reg": vit_base,
++            "dinov2_vits14_reg": vit_small,
++            "dinov2_vitg2_reg": vit_giant2,
++        }
++
++        if patch_embed not in vit_models:
++            raise ValueError(
++                f"Unknown patch embedding model: {patch_embed}. "
++                f"Available options: {list(vit_models.keys())}"
++            )
++
++        self.patch_embed = vit_models[patch_embed](
++            img_size=img_size,
++            patch_size=patch_size,
++            num_register_tokens=num_register_tokens,
++            interpolate_antialias=interpolate_antialias,
++            interpolate_offset=interpolate_offset,
++            block_chunks=block_chunks,
++            init_values=init_values,
++        )
++
++        if hasattr(self.patch_embed, "mask_token"):
++            self.patch_embed.mask_token.requires_grad_(False)
+ 
+     def forward(
+         self,
+         images: torch.Tensor,
+-    ) -> Tuple[List[torch.Tensor], int]:
++    ) -> Tuple[List[Optional[torch.Tensor]], int]:
+         """
++        Run alternating frame and global attention.
++
+         Args:
+-            images (torch.Tensor): Input images with shape [B, S, 3, H, W], in range [0, 1].
+-                B: batch size, S: sequence length, 3: RGB channels, H: height, W: width
++            images:
++                Input tensor with shape:
++
++                    [B, S, 3, H, W]
++
++                where:
++
++                    B = batch size
++                    S = number of video frames
++                    H = frame height
++                    W = frame width
+ 
+         Returns:
+-            (list[torch.Tensor], int):
+-                The list of outputs from the attention blocks,
+-                and the patch_start_idx indicating where patch tokens begin.
++            output_list:
++                One list entry for each transformer layer.
++
++                Required layers contain tensors. Unused layers contain None.
++                This preserves the original layer indexing while reducing
++                GPU memory use.
++
++            patch_start_idx:
++                Index where patch tokens begin.
+         """
++
++        if images.ndim != 5:
++            raise ValueError(
++                "Expected images with shape [B, S, 3, H, W], "
++                f"but received {tuple(images.shape)}"
++            )
++
+         B, S, C_in, H, W = images.shape
+ 
+         if C_in != 3:
+-            raise ValueError(f"Expected 3 input channels, got {C_in}")
++            raise ValueError(
++                f"Expected 3 input channels, got {C_in}"
++            )
+ 
+-        # Normalize images and reshape for patch embed
+-        images = (images - self._resnet_mean) / self._resnet_std
++        # Normalize using ImageNet statistics.
++        images = (
++            images - self._resnet_mean
++        ) / self._resnet_std
++
++        # Convert:
++        #
++        # [B, S, C, H, W]
++        #
++        # into:
++        #
++        # [B*S, C, H, W]
++        images = images.reshape(
++            B * S,
++            C_in,
++            H,
++            W,
++        )
+ 
+-        # Reshape to [B*S, C, H, W] for patch embedding
+-        images = images.view(B * S, C_in, H, W)
+         patch_tokens = self.patch_embed(images)
+ 
+         if isinstance(patch_tokens, dict):
+-            patch_tokens = patch_tokens["x_norm_patchtokens"]
++            patch_tokens = patch_tokens[
++                "x_norm_patchtokens"
++            ]
++
++        if patch_tokens.ndim != 3:
++            raise RuntimeError(
++                "Patch embedding must return a tensor with shape "
++                "[B*S, P, C], but received "
++                f"{tuple(patch_tokens.shape)}"
++            )
+ 
+-        _, P, C = patch_tokens.shape
++        _, _, C = patch_tokens.shape
+ 
+-        # Expand camera and register tokens to match batch size and sequence length
+-        camera_token = slice_expand_and_flatten(self.camera_token, B, S)
+-        register_token = slice_expand_and_flatten(self.register_token, B, S)
++        camera_token = slice_expand_and_flatten(
++            self.camera_token,
++            B,
++            S,
++        )
++
++        register_token = slice_expand_and_flatten(
++            self.register_token,
++            B,
++            S,
++        )
+ 
+-        # Concatenate special tokens with patch tokens
+-        tokens = torch.cat([camera_token, register_token, patch_tokens], dim=1)
++        # Concatenate:
++        #
++        # camera token
++        # register tokens
++        # patch tokens
++        tokens = torch.cat(
++            [
++                camera_token,
++                register_token,
++                patch_tokens,
++            ],
++            dim=1,
++        )
+ 
+         pos = None
++
+         if self.rope is not None:
+-            pos = self.position_getter(B * S, H // self.patch_size, W // self.patch_size, device=images.device)
++            pos = self.position_getter(
++                B * S,
++                H // self.patch_size,
++                W // self.patch_size,
++                device=images.device,
++            )
+ 
+         if self.patch_start_idx > 0:
+-            # do not use position embedding for special tokens (camera and register tokens)
+-            # so set pos to 0 for the special tokens
++            if pos is None:
++                raise RuntimeError(
++                    "Position embeddings are required when "
++                    "patch_start_idx is greater than zero."
++                )
++
++            # Shift real patch positions by one so that zero can represent
++            # the special camera and register tokens.
+             pos = pos + 1
+-            pos_special = torch.zeros(B * S, self.patch_start_idx, 2).to(images.device).to(pos.dtype)
+-            pos = torch.cat([pos_special, pos], dim=1)
+ 
+-        # update P because we added special tokens
++            pos_special = torch.zeros(
++                B * S,
++                self.patch_start_idx,
++                2,
++                device=images.device,
++                dtype=pos.dtype,
++            )
++
++            pos = torch.cat(
++                [
++                    pos_special,
++                    pos,
++                ],
++                dim=1,
++            )
++
+         _, P, C = tokens.shape
+ 
+         frame_idx = 0
+         global_idx = 0
+-        output_list = []
++
++        output_list: List[Optional[torch.Tensor]] = []
+ 
+         for _ in range(self.aa_block_num):
++            frame_intermediates = None
++            global_intermediates = None
++
+             for attn_type in self.aa_order:
+                 if attn_type == "frame":
+-                    tokens, frame_idx, frame_intermediates = self._process_frame_attention(
+-                        tokens, B, S, P, C, frame_idx, pos=pos
++                    (
++                        tokens,
++                        frame_idx,
++                        frame_intermediates,
++                    ) = self._process_frame_attention(
++                        tokens=tokens,
++                        B=B,
++                        S=S,
++                        P=P,
++                        C=C,
++                        frame_idx=frame_idx,
++                        pos=pos,
+                     )
++
+                 elif attn_type == "global":
+-                    tokens, global_idx, global_intermediates = self._process_global_attention(
+-                        tokens, B, S, P, C, global_idx, pos=pos
++                    (
++                        tokens,
++                        global_idx,
++                        global_intermediates,
++                    ) = self._process_global_attention(
++                        tokens=tokens,
++                        B=B,
++                        S=S,
++                        P=P,
++                        C=C,
++                        global_idx=global_idx,
++                        pos=pos,
++                    )
++
++                else:
++                    raise ValueError(
++                        f"Unknown attention type: {attn_type}"
++                    )
++
++            if frame_intermediates is None:
++                raise RuntimeError(
++                    "Frame attention was not executed. "
++                    "aa_order must include 'frame'."
++                )
++
++            if global_intermediates is None:
++                raise RuntimeError(
++                    "Global attention was not executed. "
++                    "aa_order must include 'global'."
++                )
++
++            if len(frame_intermediates) != len(
++                global_intermediates
++            ):
++                raise RuntimeError(
++                    "Frame and global intermediate counts differ: "
++                    f"{len(frame_intermediates)} versus "
++                    f"{len(global_intermediates)}"
++                )
++
++            for intermediate_index in range(
++                len(frame_intermediates)
++            ):
++                # Since exactly one list entry is appended for each layer,
++                # the current list length equals the current layer index.
++                layer_idx = len(output_list)
++
++                if layer_idx in self.cached_layer_indices:
++                    # Concatenate only the layers consumed by DPTHead or
++                    # CameraHead.
++                    concat_intermediate = torch.cat(
++                        [
++                            frame_intermediates[
++                                intermediate_index
++                            ],
++                            global_intermediates[
++                                intermediate_index
++                            ],
++                        ],
++                        dim=-1,
++                    )
++
++                    output_list.append(
++                        concat_intermediate
+                     )
++
+                 else:
+-                    raise ValueError(f"Unknown attention type: {attn_type}")
++                    # Preserve the original layer index without retaining
++                    # the large concatenated tensor.
++                    output_list.append(None)
++
++            del frame_intermediates
++            del global_intermediates
+ 
+-            for i in range(len(frame_intermediates)):
+-                # concat frame and global intermediates, [B x S x P x 2C]
+-                concat_inter = torch.cat([frame_intermediates[i], global_intermediates[i]], dim=-1)
+-                output_list.append(concat_inter)
++        if len(output_list) != self.depth:
++            raise RuntimeError(
++                "Unexpected number of aggregator outputs. "
++                f"Expected {self.depth}, got {len(output_list)}."
++            )
++
++        for required_layer in self.cached_layer_indices:
++            if output_list[required_layer] is None:
++                raise RuntimeError(
++                    "Required aggregator output was not cached at "
++                    f"layer {required_layer}."
++                )
+ 
+-        del concat_inter
+-        del frame_intermediates
+-        del global_intermediates
+         return output_list, self.patch_start_idx
+ 
+-    def _process_frame_attention(self, tokens, B, S, P, C, frame_idx, pos=None):
++    def _process_frame_attention(
++        self,
++        tokens,
++        B,
++        S,
++        P,
++        C,
++        frame_idx,
++        pos=None,
++    ):
+         """
+-        Process frame attention blocks. We keep tokens in shape (B*S, P, C).
++        Process attention independently for each video frame.
++
++        Tokens are represented as:
++
++            [B*S, P, C]
+         """
+-        # If needed, reshape tokens or positions:
+-        if tokens.shape != (B * S, P, C):
+-            tokens = tokens.view(B, S, P, C).view(B * S, P, C)
+ 
+-        if pos is not None and pos.shape != (B * S, P, 2):
+-            pos = pos.view(B, S, P, 2).view(B * S, P, 2)
++        expected_shape = (
++            B * S,
++            P,
++            C,
++        )
++
++        if tokens.shape != expected_shape:
++            tokens = tokens.reshape(
++                B,
++                S,
++                P,
++                C,
++            ).reshape(
++                B * S,
++                P,
++                C,
++            )
++
++        if pos is not None:
++            expected_pos_shape = (
++                B * S,
++                P,
++                2,
++            )
++
++            if pos.shape != expected_pos_shape:
++                pos = pos.reshape(
++                    B,
++                    S,
++                    P,
++                    2,
++                ).reshape(
++                    B * S,
++                    P,
++                    2,
++                )
+ 
+         intermediates = []
+ 
+-        # by default, self.aa_block_size=1, which processes one block at a time
+         for _ in range(self.aa_block_size):
++            if frame_idx >= len(self.frame_blocks):
++                raise RuntimeError(
++                    "frame_idx exceeded the number of frame blocks: "
++                    f"{frame_idx} >= {len(self.frame_blocks)}"
++                )
++
+             if self.training:
+-                tokens = checkpoint(self.frame_blocks[frame_idx], tokens, pos, use_reentrant=False)
++                tokens = checkpoint(
++                    self.frame_blocks[frame_idx],
++                    tokens,
++                    pos,
++                    use_reentrant=False,
++                )
+             else:
+-                tokens = self.frame_blocks[frame_idx](tokens, pos=pos)
++                tokens = self.frame_blocks[frame_idx](
++                    tokens,
++                    pos=pos,
++                )
++
+             frame_idx += 1
+-            intermediates.append(tokens.view(B, S, P, C))
++
++            intermediates.append(
++                tokens.reshape(
++                    B,
++                    S,
++                    P,
++                    C,
++                )
++            )
+ 
+         return tokens, frame_idx, intermediates
+ 
+-    def _process_global_attention(self, tokens, B, S, P, C, global_idx, pos=None):
++    def _process_global_attention(
++        self,
++        tokens,
++        B,
++        S,
++        P,
++        C,
++        global_idx,
++        pos=None,
++    ):
+         """
+-        Process global attention blocks. We keep tokens in shape (B, S*P, C).
++        Process global attention across all frames.
++
++        Tokens are represented as:
++
++            [B, S*P, C]
+         """
+-        if tokens.shape != (B, S * P, C):
+-            tokens = tokens.view(B, S, P, C).view(B, S * P, C)
+ 
+-        if pos is not None and pos.shape != (B, S * P, 2):
+-            pos = pos.view(B, S, P, 2).view(B, S * P, 2)
++        expected_shape = (
++            B,
++            S * P,
++            C,
++        )
++
++        if tokens.shape != expected_shape:
++            tokens = tokens.reshape(
++                B,
++                S,
++                P,
++                C,
++            ).reshape(
++                B,
++                S * P,
++                C,
++            )
++
++        if pos is not None:
++            expected_pos_shape = (
++                B,
++                S * P,
++                2,
++            )
++
++            if pos.shape != expected_pos_shape:
++                pos = pos.reshape(
++                    B,
++                    S,
++                    P,
++                    2,
++                ).reshape(
++                    B,
++                    S * P,
++                    2,
++                )
+ 
+         intermediates = []
+ 
+-        # by default, self.aa_block_size=1, which processes one block at a time
+         for _ in range(self.aa_block_size):
++            if global_idx >= len(self.global_blocks):
++                raise RuntimeError(
++                    "global_idx exceeded the number of global blocks: "
++                    f"{global_idx} >= {len(self.global_blocks)}"
++                )
++
+             if self.training:
+-                tokens = checkpoint(self.global_blocks[global_idx], tokens, pos, use_reentrant=False)
++                tokens = checkpoint(
++                    self.global_blocks[global_idx],
++                    tokens,
++                    pos,
++                    use_reentrant=False,
++                )
+             else:
+-                tokens = self.global_blocks[global_idx](tokens, pos=pos)
++                tokens = self.global_blocks[global_idx](
++                    tokens,
++                    pos=pos,
++                )
++
+             global_idx += 1
+-            intermediates.append(tokens.view(B, S, P, C))
++
++            intermediates.append(
++                tokens.reshape(
++                    B,
++                    S,
++                    P,
++                    C,
++                )
++            )
+ 
+         return tokens, global_idx, intermediates
+ 
+ 
+-def slice_expand_and_flatten(token_tensor, B, S):
++def slice_expand_and_flatten(
++    token_tensor: torch.Tensor,
++    B: int,
++    S: int,
++) -> torch.Tensor:
+     """
+-    Processes specialized tokens with shape (1, 2, X, C) for multi-frame processing:
+-    1) Uses the first position (index=0) for the first frame only
+-    2) Uses the second position (index=1) for all remaining frames (S-1 frames)
+-    3) Expands both to match batch size B
+-    4) Concatenates to form (B, S, X, C) where each sequence has 1 first-position token
+-       followed by (S-1) second-position tokens
+-    5) Flattens to (B*S, X, C) for processing
++    Expand specialized tokens for a video sequence.
++
++    token_tensor has shape:
++
++        [1, 2, X, C]
++
++    The first token version is used for frame zero. The second token
++    version is used for all subsequent frames.
+ 
+     Returns:
+-        torch.Tensor: Processed tokens with shape (B*S, X, C)
++
++        [B*S, X, C]
+     """
+ 
+-    # Slice out the "query" tokens => shape (1, 1, ...)
+-    query = token_tensor[:, 0:1, ...].expand(B, 1, *token_tensor.shape[2:])
+-    # Slice out the "other" tokens => shape (1, S-1, ...)
+-    others = token_tensor[:, 1:, ...].expand(B, S - 1, *token_tensor.shape[2:])
+-    # Concatenate => shape (B, S, ...)
+-    combined = torch.cat([query, others], dim=1)
++    if token_tensor.ndim != 4:
++        raise ValueError(
++            "token_tensor must have shape [1, 2, X, C], "
++            f"but received {tuple(token_tensor.shape)}"
++        )
++
++    if token_tensor.shape[0] != 1:
++        raise ValueError(
++            "token_tensor batch dimension must be 1, "
++            f"but received {token_tensor.shape[0]}"
++        )
++
++    if token_tensor.shape[1] != 2:
++        raise ValueError(
++            "token_tensor must contain two token variants, "
++            f"but received {token_tensor.shape[1]}"
++        )
++
++    if B <= 0:
++        raise ValueError(
++            f"B must be positive, but received {B}"
++        )
++
++    if S <= 0:
++        raise ValueError(
++            f"S must be positive, but received {S}"
++        )
++
++    query = token_tensor[:, 0:1, ...].expand(
++        B,
++        1,
++        *token_tensor.shape[2:],
++    )
++
++    if S > 1:
++        others = token_tensor[:, 1:2, ...].expand(
++            B,
++            S - 1,
++            *token_tensor.shape[2:],
++        )
++
++        combined = torch.cat(
++            [
++                query,
++                others,
++            ],
++            dim=1,
++        )
++    else:
++        combined = query
++
++    combined = combined.reshape(
++        B * S,
++        *combined.shape[2:],
++    )
+ 
+-    # Finally flatten => shape (B*S, ...)
+-    combined = combined.view(B * S, *combined.shape[2:])
+-    return combined
++    return combined
+\ No newline at end of file

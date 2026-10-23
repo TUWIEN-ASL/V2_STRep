@@ -1,0 +1,28 @@
+{
+"grasps": [
+{
+"grasp_mode": "surface_normal",
+"anchor_pixel": [813, 277],
+"open_axis_mode": "explicit_axis",
+"axis_pixel_start": [810, 274],
+"axis_pixel_end": [816, 280],
+"reason": "Grasp the exposed free portion of the upper drawer pull across its narrow width. An oblique approach reduces hand interference with the nearby cabinet top."
+},
+{
+"grasp_mode": "surface_normal",
+"anchor_pixel": [817, 274],
+"open_axis_mode": "explicit_axis",
+"axis_pixel_start": [814, 270],
+"axis_pixel_end": [820, 278],
+"reason": "Use the upper pull's central visible surface, closing across the strap width to hold it during a slow outward pull."
+},
+{
+"grasp_mode": "surface_normal",
+"anchor_pixel": [822, 272],
+"open_axis_mode": "explicit_axis",
+"axis_pixel_start": [819, 268],
+"axis_pixel_end": [825, 276],
+"reason": "Alternate interior contact on the upper pull, with closure across its narrow width and approach from the exposed face."
+}
+]
+}

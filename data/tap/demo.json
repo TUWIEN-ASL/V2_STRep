@@ -1,0 +1,143 @@
+{
+"task_instruction": "slowly lift up the bar, move to top center of the wooden plate, and slowly tap the plate up and down two times.",
+"video_structure": {
+"controlled_entity": {
+"description": "Upright silver cylindrical bar with a black lower tip."
+},
+"target_entity": {
+"description": "Round tan wooden plate lying flat on the table."
+},
+"target_representation": "point_normal",
+"phases": [
+{
+"phase_id": "phase_1",
+"name": "Slowly lift the bar clear of the table",
+"start_frame": 34,
+"end_frame": 41,
+"motion_source": "learn_demo",
+"reference_frame": "grasp",
+"attractor_goal_phase_id": null,
+"repeatable": false,
+"cycle_interval": null,
+"rotation_policy": {
+"mode": "axis_constrained",
+"axis_constraints": [
+{
+"controlled_axis": "z",
+"reference_frame": "grasp",
+"reference_axis": "z",
+"relation": "same_direction",
+"controlled_positive_end_description": "Rounded silver upper end, opposite the black tip.",
+"reference_positive_end_description": "Rounded silver upper end at phase entry."
+}
+],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+},
+{
+"phase_id": "phase_2",
+"name": "Move above the plate center",
+"start_frame": 42,
+"end_frame": 56,
+"motion_source": "attractor",
+"reference_frame": null,
+"attractor_goal_phase_id": "phase_3",
+"repeatable": false,
+"cycle_interval": null,
+"rotation_policy": {
+"mode": "free",
+"axis_constraints": [],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+},
+{
+"phase_id": "phase_3",
+"name": "Lower to the plate center and tap up and down twice",
+"start_frame": 57,
+"end_frame": 149,
+"motion_source": "learn_demo",
+"reference_frame": "target",
+"attractor_goal_phase_id": null,
+"repeatable": true,
+"cycle_interval": {
+"start_frame": 116,
+"end_frame": 140
+},
+"rotation_policy": {
+"mode": "axis_constrained",
+"axis_constraints": [
+{
+"controlled_axis": "z",
+"reference_frame": "target",
+"reference_axis": "z",
+"relation": "same_direction",
+"controlled_positive_end_description": "Rounded silver upper end, opposite the black tapping tip.",
+"reference_positive_end_description": "Outward from the plate's exposed top surface."
+}
+],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+}
+]
+},
+"demo_initial_grounding": {
+"is_usable": true,
+"failure_reason": null,
+"controlled_entity": {
+"description": "Upright silver cylindrical bar with a black lower tip.",
+"bbox": [761, 296, 813, 456],
+"positive_pixels": [
+[798, 310],
+[792, 348],
+[782, 394],
+[777, 440]
+]
+},
+"allowed_grasp_region": {
+"bbox": [776, 315, 807, 399],
+"positive_pixels": [
+[796, 326],
+[790, 355],
+[783, 385]
+]
+},
+"target_entity": {
+"description": "Round tan wooden plate lying flat on the table.",
+"bbox": [461, 355, 638, 495]
+},
+"target_geometry": {
+"representation": "point_normal",
+"target_point_pixel": [550, 425],
+"surface_pixels": [
+[508, 396],
+[550, 379],
+[591, 399],
+[598, 437],
+[552, 465],
+[501, 440]
+],
+"axis_origin_pixel": null,
+"axis_pixels": null,
+"axis_positive_endpoint_pixel": null,
+"plane_reference_pixel": null,
+"plane_reference_mode": null,
+"target_object_bbox": null,
+"target_object_positive_pixels": null
+}
+}
+}

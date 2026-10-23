@@ -1,0 +1,115 @@
+{
+"task_instruction": "slowly lift up the apple, move to top center of the plate, and place it to the plate.",
+"video_structure": {
+"controlled_entity": {
+"description": "Red-and-yellow apple"
+},
+"target_entity": {
+"description": "Shallow round gray plate"
+},
+"target_representation": "point",
+"phases": [
+{
+"phase_id": "phase_1",
+"name": "Slowly lift the apple",
+"start_frame": 47,
+"end_frame": 70,
+"motion_source": "learn_demo",
+"reference_frame": "grasp",
+"attractor_goal_phase_id": null,
+"repeatable": false,
+"cycle_interval": null,
+"rotation_policy": {
+"mode": "free",
+"axis_constraints": [],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+},
+{
+"phase_id": "phase_2",
+"name": "Move above the plate center",
+"start_frame": 71,
+"end_frame": 81,
+"motion_source": "attractor",
+"reference_frame": null,
+"attractor_goal_phase_id": "phase_3",
+"repeatable": false,
+"cycle_interval": null,
+"rotation_policy": {
+"mode": "free",
+"axis_constraints": [],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+},
+{
+"phase_id": "phase_3",
+"name": "Lower and release onto the plate",
+"start_frame": 82,
+"end_frame": 116,
+"motion_source": "learn_demo",
+"reference_frame": "target",
+"attractor_goal_phase_id": null,
+"repeatable": false,
+"cycle_interval": null,
+"rotation_policy": {
+"mode": "free",
+"axis_constraints": [],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+}
+]
+},
+"demo_initial_grounding": {
+"is_usable": true,
+"failure_reason": null,
+"controlled_entity": {
+"description": "Red-and-yellow apple on the tabletop",
+"bbox": [635, 348, 692, 404],
+"positive_pixels": [
+[651, 362],
+[674, 367],
+[649, 384],
+[674, 390]
+]
+},
+"allowed_grasp_region": {
+"bbox": [638, 357, 689, 396],
+"positive_pixels": [
+[645, 375],
+[660, 375],
+[681, 375]
+]
+},
+"target_entity": {
+"description": "Shallow round gray plate to the left of the apple",
+"bbox": [327, 245, 492, 361]
+},
+"target_geometry": {
+"representation": "point",
+"target_point_pixel": [410, 305],
+"surface_pixels": null,
+"axis_origin_pixel": null,
+"axis_pixels": null,
+"axis_positive_endpoint_pixel": null,
+"plane_reference_pixel": null,
+"plane_reference_mode": null,
+"target_object_bbox": null,
+"target_object_positive_pixels": null
+}
+}
+}

@@ -1,0 +1,78 @@
+{
+"task_instruction": "slowly move the sponge to the black mark on table center, and slightly wipe it out.",
+"is_usable": true,
+"failure_reason": null,
+"phase_rotation_policies": [
+{
+"phase_id": "phase_1",
+"rotation_policy": {
+"mode": "axis_constrained",
+"axis_constraints": [
+{
+"controlled_axis": "z",
+"reference_frame": "target",
+"reference_axis": "z",
+"relation": "parallel_either_direction",
+"controlled_positive_end_description": null,
+"reference_positive_end_description": null
+}
+],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+},
+{
+"phase_id": "phase_2",
+"rotation_policy": {
+"mode": "axis_constrained",
+"axis_constraints": [
+{
+"controlled_axis": "z",
+"reference_frame": "target",
+"reference_axis": "z",
+"relation": "parallel_either_direction",
+"controlled_positive_end_description": null,
+"reference_positive_end_description": null
+}
+],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+}
+],
+"current_grounding": {
+"controlled_entity": {
+"description": "Small rectangular blue-and-tan sponge above and left of the black mark.",
+"bbox": [480, 239, 533, 310],
+"positive_pixels": [[506, 250], [493, 280], [518, 284], [505, 305]]
+},
+"allowed_grasp_region": {
+"bbox": [485, 263, 528, 300],
+"positive_pixels": [[494, 280], [518, 282], [505, 294]]
+},
+"target_entity": {
+"description": "Small dark irregular mark near the center of the white tabletop.",
+"bbox": [554, 410, 581, 431]
+},
+"target_geometry": {
+"representation": "plane",
+"target_point_pixel": null,
+"surface_pixels": [[539, 420], [595, 420], [568, 391], [568, 449], [540, 394], [596, 447]],
+"axis_origin_pixel": null,
+"axis_pixels": null,
+"axis_positive_endpoint_pixel": null,
+"plane_reference_pixel": [568, 420],
+"plane_reference_mode": "target",
+"target_object_bbox": null,
+"target_object_positive_pixels": null
+}
+}
+}

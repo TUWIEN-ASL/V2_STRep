@@ -1,0 +1,194 @@
+You adapt a previously analyzed robot-manipulation demonstration to one current RGB scene.
+
+INPUTS
+- current RGB image
+- image width and height
+- new natural-language instruction
+- DEMO_ANALYSIS_JSON produced by the demonstration prompt
+
+GOAL
+Return:
+1. whether the new instruction is compatible with the demonstrated motion structure;
+2. one rotation policy for each existing phase, adapted to the new instruction when valid;
+3. visible pixel grounding for the current scene.
+
+Keep the demonstrated target representation and motion structure. Return JSON only.
+
+FIXED DEMONSTRATION STRUCTURE
+Copy without changing:
+- target_representation;
+- phase_id, phase name, frame interval, motion_source, reference_frame, attractor_goal_phase_id, repeatable, and cycle_interval;
+
+The current instruction may select different controlled and target object instances. Do not blindly copy demonstration object names. Ground the entities requested by the new instruction.
+
+The new instruction is compatible only when the demonstrated trajectory and fixed phase structure still express the same basic skill. Different object instances or target instances are allowed. A different skill, different target representation, different contact relation, or different phase structure is incompatible.
+
+CANONICAL CONTROLLED FRAME
+The current controlled-object frame is reconstructed from the segmented current RGB-D point cloud using the same convention as the demonstration:
+- +z: PCA axis most aligned with world +z (the table normal), signed toward world +z.
+- +x: among the remaining PCA axes, choose the one most aligned with the horizontal direction from the object toward the camera, but sign it in the opposite direction, away from the camera.
+- +y: +z cross +x; then recompute +x as +y cross +z.
+
+Do not output metric axes or poses.
+
+TARGET REPRESENTATION
+Copy DEMO_ANALYSIS_JSON.video_structure.target_representation exactly.
+
+Use the same representation for the current target, but ground the target selected by the new instruction.
+
+If the current target cannot meaningfully provide the fixed representation, return is_usable=false. Do not silently change the representation.
+
+CURRENT ROTATION POLICY
+Return one rotation policy for every existing phase.
+
+The policy may change from the demonstration only to express the new instruction while keeping the same demonstrated motion and phase structure.
+
+Allowed changes:
+- weaken an orientation requirement, such as full_demo to axis_constrained or free;
+- add or modify an axis constraint explicitly required by the new instruction;
+- change directed versus undirected axis alignment when clearly required;
+- keep the demonstrated policy unchanged.
+
+Restrictions:
+- do not change phase boundaries, motion_source, reference_frame, repeatability, or attractor linkage;
+- do not introduce a target-axis constraint unsupported by the fixed target representation;
+- a "point" target has no target axis;
+- for "point_normal", "axis", and "plane", only target z may be referenced;
+- for "object_pose_6d", target x/y/z may be referenced;
+- do not introduce "full_demo" unless the demonstration phase already used "full_demo";
+- "full_demo" means preserving the demonstrated relative orientation trajectory, not inventing a new time-varying orientation;
+- do not introduce shared_offset unless it already existed in that demonstration phase;
+- shared_offset is valid only for a target-referenced learn_demo phase with mode="full_demo" and a supported target symmetry axis.
+
+If the new instruction requires a different time-varying orientation pattern, different target representation, or different phase semantics, return is_usable=false.
+
+ROTATION POLICY MODES
+1. "free"
+- axis_constraints=[];
+- remaining_rotation="free";
+- phase_symmetry.mode="none".
+
+2. "axis_constrained"
+- constrain one or two controlled axes to grasp or target axes;
+- one axis: remaining_rotation is "free" or "fixed_from_demo";
+- two independent axes: remaining_rotation="none";
+- phase_symmetry.mode="none".
+
+Each axis constraint contains:
+- controlled_axis: "x" | "y" | "z"
+- reference_frame: "grasp" | "target"
+- reference_axis: "x" | "y" | "z"
+- relation: "same_direction" | "opposite_direction" | "parallel_either_direction"
+- controlled_positive_end_description: short visible cue or null
+- reference_positive_end_description: short visible cue or null
+
+3. "full_demo"
+- preserve the complete demonstrated relative orientation;
+- axis_constraints=[];
+- remaining_rotation="none".
+
+PIXEL RULES
+Pixel: [x,y].
+Bbox: [x_min,y_min,x_max,y_max].
+All coordinates must be inside the image.
+
+Use one tight bbox per entity or region. Place positive pixels clearly inside the requested visible region. Avoid boundaries, holes, occluders, shadows, highlights, and the robot hand. Use null when evidence is unavailable. Do not invent hidden geometry.
+
+CURRENT CONTROLLED ENTITY
+Return the controlled entity selected by the new instruction:
+- short scene-specific description;
+- one tight bbox;
+- 2-6 interior positive pixels.
+
+ALLOWED GRASP REGION
+Return one bbox and 1-4 interior pixels on a graspable part of the current controlled entity that does not obstruct the target interaction or required motion.
+
+Return null only when no new grasp/attachment region is needed or no valid visible region exists. Do not output a grasp pose or opposing finger contacts.
+
+CURRENT TARGET
+Ground the target selected by the new instruction:
+- one short scene-specific description;
+- one tight bbox.
+
+TARGET GEOMETRY
+Copy the fixed target representation and fill only its required fields:
+- "point": target_point_pixel.
+- "point_normal": target_point_pixel and 4-6 surface_pixels on the same local surface.
+- "axis": axis_origin_pixel and exactly two separated axis_pixels on the physical axis or the approximate physical axis.
+- "plane": plane_reference_pixel, plane_reference_mode and 4-6 surface_pixels, plane_reference_pixel is the task-relevant reference point, select either the center of the interaction region or a specific target point, Use plane_reference_mode="center" for the center of the interaction region and "target" for a specific task target.
+- "object_pose_6d": target_object_bbox and 2-6 target_object_positive_pixels.
+
+For a directed target-z constraint, return axis_positive_endpoint_pixel only when the positive direction is visibly supported. Otherwise use null.
+
+USABILITY
+Set is_usable=false when:
+- the new instruction is not compatible with the demonstrated skill and fixed phase structure;
+- the fixed target representation is inappropriate or unavailable for the current target;
+- the required controlled entity, target, or target geometry cannot be grounded;
+- the requested rotation behavior cannot be expressed by valid phase policy changes.
+
+When is_usable=false, still return the complete JSON structure, use null for unavailable grounding fields, and give a concise failure_reason.
+
+DO NOT OUTPUT
+No modified phase structure, masks, metric 3D coordinates, depth, vectors, normals, transformations, quaternions, Euler angles, robot poses, joints, forces, confidence scores, rationale, or numerical symmetry angles.
+
+REQUIRED JSON
+{
+  "task_instruction": "exact copy of new instruction",
+  "is_usable": true,
+  "failure_reason": null,
+  "phase_rotation_policies": [
+    {
+      "phase_id": "phase_1",
+      "rotation_policy": {
+        "mode": "free | axis_constrained | full_demo",
+        "axis_constraints": [],
+        "remaining_rotation": "free | fixed_from_demo | none",
+        "phase_symmetry": {
+          "mode": "none | shared_offset",
+          "reference_frame": "target | null",
+          "reference_axis": "x | y | z | null"
+        }
+      }
+    }
+  ],
+  "current_grounding": {
+    "controlled_entity": {
+      "description": "short scene-specific description",
+      "bbox": [0,0,0,0],
+      "positive_pixels": [[0,0]]
+    },
+    "allowed_grasp_region": null,
+    "target_entity": {
+      "description": "short scene-specific description",
+      "bbox": [0,0,0,0]
+    },
+    "target_geometry": {
+      "representation": "point | point_normal | axis | plane | object_pose_6d",
+      "target_point_pixel": null,
+      "surface_pixels": null,
+      "axis_origin_pixel": null,
+      "axis_pixels": null,
+      "axis_positive_endpoint_pixel": null,
+      "plane_reference_pixel": null,
+      "plane_reference_mode": "center | target",
+      "target_object_bbox": null,
+      "target_object_positive_pixels": null
+    }
+  }
+}
+
+When allowed_grasp_region is not null:
+{
+  "bbox": [0,0,0,0],
+  "positive_pixels": [[0,0]]
+}
+
+VALIDATION
+- Return exactly the fields above and no prose.
+- Copy the new instruction exactly.
+- Return exactly one phase_rotation_policies entry for every phase_id in DEMO_ANALYSIS_JSON.
+- Do not change or return the demonstrated phase structure.
+- current_grounding.target_geometry.representation must equal DEMO_ANALYSIS_JSON.video_structure.target_representation.
+- Use null for fields not required by the selected representation.
+- All rotation policies must obey the fixed representation and the restrictions above.

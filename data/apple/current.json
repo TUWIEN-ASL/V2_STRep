@@ -1,0 +1,73 @@
+{
+"task_instruction": "slowly lift up the apple, move to top center of the plate, and place it to the plate.",
+"is_usable": true,
+"failure_reason": null,
+"phase_rotation_policies": [
+{
+"phase_id": "phase_1",
+"rotation_policy": {
+"mode": "free",
+"axis_constraints": [],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+},
+{
+"phase_id": "phase_2",
+"rotation_policy": {
+"mode": "free",
+"axis_constraints": [],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+},
+{
+"phase_id": "phase_3",
+"rotation_policy": {
+"mode": "free",
+"axis_constraints": [],
+"remaining_rotation": "free",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+}
+],
+"current_grounding": {
+"controlled_entity": {
+"description": "Red-and-yellow apple on the tabletop below and to the right of the plate",
+"bbox": [622, 379, 678, 436],
+"positive_pixels": [[637, 391], [631, 410], [650, 421], [667, 408]]
+},
+"allowed_grasp_region": {
+"bbox": [627, 389, 673, 424],
+"positive_pixels": [[634, 404], [650, 410], [666, 407]]
+},
+"target_entity": {
+"description": "Shallow round gray plate above and to the left of the apple",
+"bbox": [382, 232, 540, 344]
+},
+"target_geometry": {
+"representation": "point",
+"target_point_pixel": [461, 288],
+"surface_pixels": null,
+"axis_origin_pixel": null,
+"axis_pixels": null,
+"axis_positive_endpoint_pixel": null,
+"plane_reference_pixel": null,
+"plane_reference_mode": null,
+"target_object_bbox": null,
+"target_object_positive_pixels": null
+}
+}
+}

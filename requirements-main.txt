@@ -1,0 +1,41 @@
+# Install with setup_main.sh, which prepares sources and matching CUDA wheels.
+-r Dream2Flow/deps/SpaTrackerV2/requirements.txt
+
+# Keep the numerical stack used by the successful bottle installation.
+numpy==1.26.4
+scipy==1.15.3
+torch==2.4.1+cu118
+torchvision==0.19.1+cu118
+xformers==0.0.28
+torch-cluster==1.6.3+pt24cu118
+jax==0.6.2
+jaxlib==0.6.2
+jaxlie==1.5.0
+
+# Headless provides cv2; upstream Dream2Flow still declares opencv-python.
+opencv-python-headless==4.11.0.86
+viser==1.0.30
+tensordict==0.13.0
+transformers==5.13.0
+torch-geometric==2.6.1
+open3d==0.19.0
+yourdfpy==0.0.60
+robot-descriptions==3.1.0
+jaxls @ git+https://github.com/brentyi/jaxls.git@50a58be88c5ef74532f09e3f55268b4f02c490e3
+
+google-genai
+python-dotenv
+Pillow
+pyyaml
+hydra-core
+iopath
+matplotlib
+flow_vis
+tqdm
+tensorboard
+jax_dataclasses
+jaxtyping
+tyro
+loguru
+trimesh
+pyliblzfse

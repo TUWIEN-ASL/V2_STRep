@@ -1,0 +1,47 @@
+{
+"task_instruction": "slowly open the door of the microwave, only half open.",
+"is_usable": true,
+"failure_reason": null,
+"phase_rotation_policies": [
+{
+"phase_id": "phase_1",
+"rotation_policy": {
+"mode": "full_demo",
+"axis_constraints": [],
+"remaining_rotation": "none",
+"phase_symmetry": {
+"mode": "none",
+"reference_frame": null,
+"reference_axis": null
+}
+}
+}
+],
+"current_grounding": {
+"controlled_entity": {
+"description": "Black left-hinged microwave door with a brown-taped vertical handle on its right edge.",
+"bbox": [668, 82, 963, 342],
+"positive_pixels": [[726, 163], [792, 210], [829, 260], [886, 289]]
+},
+"allowed_grasp_region": {
+"bbox": [859, 177, 939, 341],
+"positive_pixels": [[906, 230], [896, 263], [881, 305]]
+},
+"target_entity": {
+"description": "Stationary black microwave body supporting the door hinge along its left front edge.",
+"bbox": [665, 0, 1135, 356]
+},
+"target_geometry": {
+"representation": "axis",
+"target_point_pixel": null,
+"surface_pixels": null,
+"axis_origin_pixel": [671, 165],
+"axis_pixels": [[672, 112], [670, 218]],
+"axis_positive_endpoint_pixel": null,
+"plane_reference_pixel": null,
+"plane_reference_mode": null,
+"target_object_bbox": null,
+"target_object_positive_pixels": null
+}
+}
+}
