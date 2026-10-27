@@ -107,8 +107,8 @@ Edit [config/full_pipeline_config.json](config/full_pipeline_config.json):
 
 | Setting | Current value | Options / purpose |
 | --- | --- | --- |
-| `reconstruction.controlled_object_frame_method` | `"sam3d"` | `"pca"` or `"sam3d"` for the controlled object's frame. |
-| `reconstruction.target_object_frame_method` | `"sam3d"` | `"pca"` or `"sam3d"` for targets represented as `object_pose_6d`. |
+| `reconstruction.controlled_object_frame_method` | `"pca"` | `"pca"` or `"sam3d"` for the controlled object's frame. |
+| `reconstruction.target_object_frame_method` | `"pca"` | `"pca"` or `"sam3d"` for targets represented as `object_pose_6d`. |
 | `target_pose_registration.controlled_entity_rotation_constraint` | `"full_6d"` | Full rotation and translation, or `"yaw_only"` for rotation about world up plus translation. |
 | `target_pose_registration.target_object_rotation_constraint` | `"full_6d"` | The same choice for an `object_pose_6d` target. |
 | `sam3d.root` | `"../sam-3d-objects"` | SAM3D checkout path, relative to `config/` or absolute. |
