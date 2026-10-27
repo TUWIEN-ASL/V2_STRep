@@ -57,8 +57,7 @@ data/
     ├── current_q.npy             # Required for given_q mode
     └── object_flow_result.pt     # Required only for scene transfer
 ```
-
-1. Capture the demonstration video and its initial RGB-D frame, plus an RGB-D image of the current scene. Depth must be a numeric `(H, W)` NumPy array in **metres**, aligned with the corresponding RGB image.
+1. Capture the demonstration video and its initial RGB-D frame, plus an RGB-D image of the current scene. Our experiments use **1280 × 720 pixels (width × height)** for both videos and RGB images. Depth must be a NumPy array in **metres**, aligned with the corresponding RGB image—shape `(720, 1280)` at this resolution.
 2. Provide your camera calibration using the [example structure](data/camera_calibration_info.json). The `external_sensor0` entry contains 3×3 `intrinsics` and 4×4 `extrinsics`, where extrinsics map **camera coordinates to robot base/world coordinates**. Keep this file in the task folder's parent directory.
 3. Generate the three task JSON files using the prompts below. Our supplied task JSON annotations were generated with **GPT-6 Astra**. The launchers read these saved files, no need API calls.
 
