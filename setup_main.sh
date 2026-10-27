@@ -9,17 +9,24 @@ if [[ -z "${CONDA_PREFIX:-}" || "${CONDA_DEFAULT_ENV:-}" == "base" ]]; then
     echo "Activate a dedicated Conda environment first (recommended: v2_strep)." >&2
     exit 1
 fi
-if [[ "$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])')" != "3.10" ]]; then
-    echo "The main environment requires Python 3.10." >&2
-    exit 1
-fi
+export PYTHONNOUSERSITE=1
+python - <<'PYTHON_CHECK'
+import os
+import sys
+from pathlib import Path
+
+if Path(sys.prefix).resolve() != Path(os.environ["CONDA_PREFIX"]).resolve():
+    raise SystemExit("Python is outside the active Conda environment. Reactivate it before installing.")
+if sys.version_info[:2] != (3, 10):
+    raise SystemExit("The main environment requires Python 3.10.")
+PYTHON_CHECK
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DREAM_ROOT="${PROJECT_ROOT}/Dream2Flow"
 cd "${PROJECT_ROOT}"
 
-# Limit package-index overrides to this script and its child processes.
-unset PIP_EXTRA_INDEX_URL PIP_FIND_LINKS
+# Keep pip settings local to this installer and its child processes.
+unset PIP_EXTRA_INDEX_URL PIP_FIND_LINKS PIP_TARGET PIP_PREFIX PIP_USER PIP_ROOT PIP_PYTHON
 export PIP_CONFIG_FILE=/dev/null
 export PIP_INDEX_URL=https://pypi.org/simple
 
