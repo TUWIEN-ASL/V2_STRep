@@ -18,7 +18,7 @@ bash setup_main.sh
 
 ### Optional: SAM3D
 
-Install SAM3D only if an object-frame method in the configuration is set to `"sam3d"`. For PCA-only operation, set both methods to `"pca"`; no SAM3D installation is needed. The supplied configuration currently selects SAM3D.
+Install SAM3D only if an object-frame method in the configuration is set to `"sam3d"`. For PCA-only operation, set both methods to `"pca"`; no SAM3D installation is needed. The supplied configuration currently selects PCA.
 
 From the project root:
 
