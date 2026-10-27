@@ -1,6 +1,5 @@
 # V2-STRep
 
-Transfer demonstrated object motion to a current scene and optimize a Panda robot trajectory, using PCA or SAM3D to estimate object frames.
 
 [Project page](https://tuwien-asl.github.io/V2-STRep/) · [arXiv](https://arxiv.org/abs/2609.20582)
 
