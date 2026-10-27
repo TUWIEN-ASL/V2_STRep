@@ -6,7 +6,7 @@ Transfer demonstrated object motion to a current scene and optimize a Panda robo
 
 ## Installation
 
-Requires Linux, Conda, and an NVIDIA GPU. Our environment builds on [Dream2Flow](https://dream2flow.github.io/), with dependency versions pinned for V2-STRep and modifications for GPU memory use and pipeline integration. The setup script installs our bundled Dream2Flow version and the additional planning dependencies.
+Requires Linux, Conda, and an NVIDIA GPU. Our environment builds on [Dream2Flow](https://dream2flow.github.io/), with dependency versions pinned for V2-STRep and modifications for GPU memory use compatible with RTX 4000 Ada and pipeline integration. The setup script installs our bundled Dream2Flow version and the additional planning dependencies.
 
 ```bash
 git clone https://github.com/TUWIEN-ASL/V2_STRep.git
