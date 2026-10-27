@@ -2,7 +2,7 @@
 
 Transfer demonstrated object motion to a current scene and optimize a Panda robot trajectory. The pipeline combines Dream2Flow object tracking, geometric task references, object registration, grasp candidates, and trajectory optimization. Object frames can be estimated with PCA or refined SAM3D reconstructions.
 
-[Project page](PROJECT_PAGE_URL) · [arXiv](ARXIV_URL)
+[Project page](https://tuwien-asl.github.io/V2-STRep/) · [arXiv](https://arxiv.org/abs/2609.20582)
 
 <!-- Replace PROJECT_PAGE_URL and ARXIV_URL above with the public links. -->
 
