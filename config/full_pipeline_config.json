@@ -4,8 +4,8 @@
   },
 
   "reconstruction": {
-    "controlled_object_frame_method": "sam3d",
-    "target_object_frame_method": "sam3d",
+    "controlled_object_frame_method": "pca",
+    "target_object_frame_method": "pca",
 
     "world_up": [
       0.0,
