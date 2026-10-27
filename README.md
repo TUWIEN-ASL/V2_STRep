@@ -64,9 +64,9 @@ data/
 
 | Output | Prompt | Inputs |
 | --- | --- | --- |
-| `demo.json` | [demo_prompt.txt](prompts/demo_prompt.txt) | Demo video, initial image, instruction. |
-| `current.json` | [current_prompt.txt](prompts/current_prompt.txt) | Current image, instruction, and `demo.json`. |
-| `grasp_spec.json` | [grasp_prompt.txt](prompts/grasp_prompt.txt) | Current image and manipulation instruction. |
+| `demo.json` | [demo_prompt.txt](prompts/demo_prompt.txt) | Demo video, source initial image, instruction. |
+| `current.json` | [current_prompt.txt](prompts/current_prompt.txt) | Deployment initial image, instruction, and `demo.json`. |
+| `grasp_spec.json` | [grasp_prompt.txt](prompts/grasp_prompt.txt) | Deployment initial image and instruction. |
 
 Use original-image pixel coordinates `[u, v]`. Phase frame indices are zero-based and inclusive; keep them consistent with the video and saved flow. For `given_q`, save the robot's initial joint vector in `current_q.npy` (normally seven Panda arm angles in radians). The supplied examples use `grasp` and do not include this joint file.
 
