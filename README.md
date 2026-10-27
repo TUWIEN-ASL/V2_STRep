@@ -17,7 +17,10 @@ bash setup_main.sh
 
 ### Optional: SAM3D
 
-Install SAM3D only if an object-frame method in the configuration is set to `"sam3d"`. For PCA-only operation, set both methods to `"pca"`; no SAM3D installation is needed. The supplied configuration currently selects PCA.
+
+Our paper uses PCA to estimate the initial object coordinate frame from the observed point cloud, and `"pca"` remains the default configuration. SAM3D is available as an optional alternative: it uses reconstructed object geometry to improve initial frame estimation, particularly when the observed point cloud is incomplete or partially occluded.
+
+To enable SAM3D, follow its official installation instructions and set the corresponding object-frame method to `"sam3d"` in `config/full_pipeline_config.json`. Keep both object-frame methods set to `"pca"` to use PCA approach without installing SAM3D.
 
 From the project root:
 
