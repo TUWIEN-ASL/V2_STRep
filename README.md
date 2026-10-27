@@ -64,7 +64,7 @@ data/
 
 | Output | Prompt | Inputs |
 | --- | --- | --- |
-| `demo.json` | [demo_prompt.txt](prompts/demo_prompt.txt) | Demo video, initial image, instruction, frame count, and image dimensions. |
+| `demo.json` | [demo_prompt.txt](prompts/demo_prompt.txt) | Demo video, initial image, instruction. |
 | `current.json` | [current_prompt.txt](prompts/current_prompt.txt) | Current image, instruction, and `demo.json`. |
 | `grasp_spec.json` | [grasp_prompt.txt](prompts/grasp_prompt.txt) | Current image and manipulation instruction. |
 
