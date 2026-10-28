@@ -15,7 +15,7 @@ conda activate v2_strep
 bash setup_main.sh
 ```
 
-### Optional: SAM3D
+#### Optional: SAM3D
 
 
 Our paper uses PCA to estimate the initial object coordinate frame from the observed point cloud, and `"pca"` remains the default configuration. SAM3D is available as an optional alternative: it uses reconstructed object geometry to improve initial frame estimation, particularly when the observed point cloud is incomplete or partially occluded.
@@ -73,7 +73,7 @@ Use original-image pixel coordinates `[u, v]`. Phase frame indices are zero-base
 
 Run commands from the project root with `v2_strep` active. A task name selects `data/<name>`; an explicit task-directory path also works.
 
-### Full pipeline
+#### Full pipeline
 
 Generates depth and object flow from the demonstration video, registers the objects, plans the motion, and opens Viser.
 
@@ -88,7 +88,7 @@ bash run_full_pipeline.sh bottle bottle_example grasp different_scene
 
 When the flow viewer opens on port **8080**, press **Enter in the terminal** to continue. The final trajectory viewer uses port **8081**.
 
-### Scene transfer with saved flow
+#### Scene transfer with saved flow
 
 Skips depth/flow generation and always uses `grasp different_scene`:
 
