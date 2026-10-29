@@ -14,6 +14,21 @@ conda create -n v2_strep python=3.10 pip -y
 conda activate v2_strep
 bash setup_main.sh
 ```
+### NVIDIA RTX Blackwell GPUs
+
+For NVIDIA RTX Blackwell GPUs, such as the RTX PRO 4000 Blackwell, use the following installation steps instead of the default setup above.
+
+From the repository root:
+
+```bash
+git clone https://github.com/TUWIEN-ASL/V2_STRep.git
+cd V2_STRep
+conda create -n v2_strep python=3.10 pip -y
+conda activate v2_strep
+bash setup_main_blackwell.sh
+```
+
+
 
 ### Optional: SAM3D
 
