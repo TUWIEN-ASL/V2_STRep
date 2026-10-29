@@ -18,8 +18,6 @@ bash setup_main.sh
 
 For NVIDIA RTX Blackwell GPUs, such as the RTX PRO 4000 Blackwell, use the following installation steps instead of the default setup above.
 
-From the repository root:
-
 ```bash
 git clone https://github.com/TUWIEN-ASL/V2_STRep.git
 cd V2_STRep
